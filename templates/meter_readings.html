@@ -298,6 +298,34 @@
     margin-top: 3px;
   }
 
+  @media (max-width: 520px) {
+    .pricing-tile-main {
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+    }
+    .tiered-subgrid {
+      grid-template-columns: 1fr !important;
+      padding-left: 0 !important;
+      gap: 8px !important;
+    }
+    .tiered-subbox {
+      padding: 6px 12px !important;
+      font-size: 0.86rem !important;
+    }
+    .pricing-header-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 8px !important;
+    }
+    .btn-auto-pricing {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+    .auto-subtext {
+      padding-left: 0 !important;
+    }
+  }
+
   /* Realtime Calculation Preview Box */
   .live-calc-card {
     border: 1px solid #bae6fd;
@@ -587,15 +615,15 @@
         <tbody>
           {% for r in readings %}
           <tr>
-            <td>
-              <div style="font-weight: 600;">{{ r.meter_number }}</div>
+            <td data-label="កុងទ័រ / អតិថិជន">
+              <div style="font-weight: 700; color: var(--text-primary);">{{ r.meter_number }}</div>
               <small style="color: var(--text-muted);">{{ r.customer_name }}</small>
             </td>
-            <td>{{ "{:,.2f}".format(r.previous_reading) }}</td>
-            <td>{{ "{:,.2f}".format(r.current_reading) }}</td>
-            <td><strong style="color: #60a5fa;">{{ "{:,.2f}".format(r.total_kwh) }}</strong></td>
-            <td>{{ r.reading_date }}</td>
-            <td>
+            <td data-label="លេខកុងទ័រចាស់">{{ "{:,.2f}".format(r.previous_reading) }}</td>
+            <td data-label="លេខកុងទ័រថ្មី">{{ "{:,.2f}".format(r.current_reading) }}</td>
+            <td data-label="ថាមពល (kWh)"><strong style="color: #2563eb;">{{ "{:,.2f}".format(r.total_kwh) }} kWh</strong></td>
+            <td data-label="កាលបរិច្ឆេទ">{{ r.reading_date }}</td>
+            <td data-label="ស្ថានភាព">
               {% if r.alert_notes %}
                 <span class="badge badge-overdue" title="{{ r.alert_notes }}"><i class="fa-solid fa-triangle-exclamation"></i> Alert</span>
               {% else %}

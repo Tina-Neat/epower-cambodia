@@ -222,9 +222,8 @@ body {
   font-size: 0.85rem;
   font-weight: 700;
   color: #f8fafc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .user-meta-row {
