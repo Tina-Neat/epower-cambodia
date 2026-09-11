@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="manifest" href="/static/manifest.json">
-  <link rel="stylesheet" href="/static/css/style.css?v=20260911_v7">
+  <link rel="stylesheet" href="/static/css/style.css?v=20260912_v1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -110,12 +110,10 @@
       </ul>
 
       <div class="sidebar-footer">
-        <div style="margin-bottom: 8px;">
-          <a href="/api/backup/download" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 0.78rem;" title="ទាញយកឯកសារ Backup SQLite">
-            <i class="fa-solid fa-download"></i> Backup Database (Offline)
-          </a>
-        </div>
-        <p><i class="fa-solid fa-shield-halved"></i> E-Power v1.0 • Online / Offline</p>
+        <a href="/api/backup/download" class="btn btn-secondary btn-sm sidebar-backup-btn" title="ទាញយកឯកសារ Backup SQLite">
+          <i class="fa-solid fa-download"></i> <span>Backup Database (Offline)</span>
+        </a>
+        <p class="sidebar-version-text"><i class="fa-solid fa-shield-halved"></i> E-Power v1.0 • Online / Offline</p>
       </div>
     </aside>
 
