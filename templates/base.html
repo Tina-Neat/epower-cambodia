@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="description" content="E-Power Cambodia - ប្រព័ន្ធគ្រប់គ្រងការប្រើប្រាស់ និងចេញវិក្កយបត្រអគ្គិសនី Online & Offline">
+  <title>{% block title %}ប្រព័ន្ធគ្រប់គ្រងអគ្គិសនី E-Power{% endblock %}</title>
+  
+  <link rel="icon" type="image/png" href="/img/E-power-logo.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="stylesheet" href="/static/css/style.css?v=20260911_v7">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <!-- Mobile & Tablet Sidebar Backdrop Overlay -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-header">
+        <a href="/" class="brand-logo-wrap" title="E-POWER CAMBODIA">
+          <img src="/img/E-power-logo.png" alt="E-Power Logo" class="brand-logo-img logo-full">
+          <img src="/static/icons/icon-192.png" alt="E-Power Logo" class="brand-logo-img logo-icon">
+        </a>
+        <button id="sidebarCloseBtn" class="sidebar-close-btn" aria-label="បិទ Menu" title="បិទ Menu">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Current Logged In User Profile -->
+      <div class="sidebar-user-card">
+        <div class="user-avatar-circle {% if current_user and current_user.is_permanent == 1 %}avatar-admin{% endif %}">
+          {% if current_user and current_user.is_permanent == 1 %}
+            <i class="fa-solid fa-crown"></i>
+          {% else %}
+            <i class="fa-solid fa-user-check"></i>
+          {% endif %}
+        </div>
+        <div class="user-info-text">
+          <div class="user-full-name">{{ current_user.full_name if current_user else 'អ្នកប្រើប្រាស់' }}</div>
+          <div class="user-meta-row">
+            <span class="user-role-badge {% if current_user and current_user.role == 'Admin' %}role-admin{% else %}role-staff{% endif %}">
+              {{ current_user.role if current_user else 'Staff' }}
+            </span>
+            <a href="/logout" class="btn-sidebar-logout" title="ចាកចេញ (Logout)">
+              <i class="fa-solid fa-right-from-bracket"></i> ចាកចេញ
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <ul class="nav-links">
+        <li class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+          <a href="/" id="navDashboard">
+            <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+            <span>ផ្ទាំងគ្រប់គ្រង (Dashboard)</span>
+          </a>
+        </li>
+        <li class="nav-item {% if active_page == 'customers' %}active{% endif %}">
+          <a href="/customers" id="navCustomers">
+            <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+            <span>អតិថិជន & កុងទ័រ</span>
+          </a>
+        </li>
+        <li class="nav-item {% if active_page == 'readings' %}active{% endif %}">
+          <a href="/readings" id="navReadings">
+            <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+            <span>កត់ត្រាលេខកុងទ័រ (kWh)</span>
+          </a>
+        </li>
+        <li class="nav-item {% if active_page == 'invoices' %}active{% endif %}">
+          <a href="/invoices" id="navInvoices">
+            <span class="nav-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+            <span>វិក្កយបត្រ (Billing)</span>
+          </a>
+        </li>
+        <li class="nav-item {% if active_page == 'payments' %}active{% endif %}">
+          <a href="/payments" id="navPayments">
+            <span class="nav-icon"><i class="fa-solid fa-credit-card"></i></span>
+            <span>ការទូទាត់ប្រាក់ (Payments)</span>
+          </a>
+        </li>
+        <li class="nav-item {% if active_page == 'reports' %}active{% endif %}">
+          <a href="/reports" id="navReports">
+            <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+            <span>របាយការណ៍ & ថាមពល</span>
+          </a>
+        </li>
+        <li class="nav-item {% if active_page == 'tariffs' %}active{% endif %}">
+          <a href="/tariffs" id="navTariffs">
+            <span class="nav-icon"><i class="fa-solid fa-tags"></i></span>
+            <span>តារាងតម្លៃពន្ធុភាព (Tariffs)</span>
+          </a>
+        </li>
+        {% if current_user and current_user.role == 'Admin' %}
+        <li class="nav-item {% if active_page == 'users' %}active{% endif %}">
+          <a href="/users" id="navUsers">
+            <span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span>
+            <span>គ្រប់គ្រងអ្នកប្រើ & អនុម័ត</span>
+            {% if pending_users_count and pending_users_count > 0 %}
+            <span class="badge badge-warning sidebar-pending-badge" title="មាន {{ pending_users_count }} សំណើរង់ចាំអនុម័ត">{{ pending_users_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+
+      <div class="sidebar-footer">
+        <div style="margin-bottom: 8px;">
+          <a href="/api/backup/download" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 0.78rem;" title="ទាញយកឯកសារ Backup SQLite">
+            <i class="fa-solid fa-download"></i> Backup Database (Offline)
+          </a>
+        </div>
+        <p><i class="fa-solid fa-shield-halved"></i> E-Power v1.0 • Online / Offline</p>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      <header class="top-bar">
+        <button id="sidebarToggle" class="mobile-toggle-btn" aria-label="បើក Menu" title="បើក Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="page-heading">
+          <h1>{% block header_title %}ផ្ទាំងគ្រប់គ្រង{% endblock %}</h1>
+          <p>{% block header_subtitle %}ទិដ្ឋភាពទូទៅនៃប្រព័ន្ធអគ្គិសនី និងការប្រើប្រាស់{% endblock %}</p>
+        </div>
+        
+        <div class="top-actions">
+          <!-- Network Indicator (Online / Offline) -->
+          <div id="networkStatusBadge" class="network-badge online" title="ស្ថានភាពតភ្ជាប់បណ្តាញ">
+            <span class="status-dot"></span>
+            <span id="networkStatusText">អនឡាញ (Online)</span>
+          </div>
+
+          {% block top_actions %}{% endblock %}
+
+          <div class="top-date-display" style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+            <i class="fa-regular fa-calendar"></i> <span id="currentDateDisplay"></span>
+          </div>
+        </div>
+      </header>
+
+      <section class="content-container">
+        <!-- Flash Messages / Toast Alerts -->
+        {% if msg %}
+        <div class="toast-container">
+          <div class="alert alert-{{ msg_type or 'info' }}">
+            <span>{{ msg }}</span>
+            <button onclick="this.parentElement.remove()" style="background:none;border:none;color:inherit;cursor:pointer;">&times;</button>
+          </div>
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/app.js?v=20260911_v7"></script>
+  <script>
+    document.getElementById('currentDateDisplay').textContent = new Date().toLocaleDateString('km-KH', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // Mobile Drawer Controller
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+
+    function openSidebar() {
+      if (sidebar) sidebar.classList.add('open');
+      if (sidebarBackdrop) sidebarBackdrop.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      if (sidebar) sidebar.classList.remove('open');
+      if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    if (sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
+    if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeSidebar);
+    if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
+
+    // Auto-close drawer when clicking any nav link on mobile/tablet
+    document.querySelectorAll('.sidebar .nav-item a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 1024) closeSidebar();
+      });
+    });
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js')
+          .then(reg => console.log('Service Worker Registered successfully.'))
+          .catch(err => console.log('Service Worker registration skipped.'));
+      });
+    }
+
+    // Network Status Dynamic Update
+    function updateNetworkStatus() {
+      const badge = document.getElementById('networkStatusBadge');
+      const text = document.getElementById('networkStatusText');
+      if (!badge || !text) return;
+
+      if (navigator.onLine) {
+        badge.className = 'network-badge online';
+        text.textContent = 'អនឡាញ (Online)';
+      } else {
+        badge.className = 'network-badge offline';
+        text.textContent = 'អហ្វឡាញ (Offline)';
+      }
+    }
+
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+  </script>
+</body>
+</html>

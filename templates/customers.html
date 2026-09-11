@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+
+{% block title %}គ្រប់គ្រងអតិថិជន & កុងទ័រ - E-Power{% endblock %}
+{% block header_title %}អតិថិជន និងនាឡិកាស្ទង់ (Customers & Meters){% endblock %}
+{% block header_subtitle %}គ្រប់គ្រងព័ត៌មានអតិថិជន និងការភ្ជាប់លេខកុងទ័រតាមបង្គោលភ្លើង{% endblock %}
+
+{% block top_actions %}
+<button onclick="openModal('addCustomerModal')" class="btn btn-primary btn-sm" id="btnOpenAddCustomer">
+  <i class="fa-solid fa-user-plus"></i> ចុះឈ្មោះអតិថិជនថ្មី
+</button>
+{% endblock %}
+
+{% block content %}
+<style>
+  @media (min-width: 1024px) {
+    /* Desktop: Strictly 100% width with zero horizontal or vertical scrollbars */
+    .table-responsive {
+      width: 100% !important;
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
+    }
+    .custom-table {
+      width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse;
+    }
+    .col-code { width: 8%; }
+    .col-name { width: 20%; }
+    .col-phone { width: 15%; }
+    .col-address { width: 20%; }
+    .col-type { width: 10%; }
+    .col-meter { width: 16%; }
+    .col-action { width: 11%; }
+  }
+  .custom-table th {
+    padding: 10px 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border-glass);
+    vertical-align: middle;
+    white-space: nowrap !important;
+  }
+  .custom-table td {
+    padding: 10px 8px !important;
+    font-size: 0.85rem !important;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  /* Phone badge: strictly horizontal on single line */
+  .phone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-family: 'Inter', var(--font-sans);
+    font-size: 0.8rem;
+    white-space: nowrap !important;
+  }
+  .phone-badge i {
+    color: #16a34a;
+    font-size: 0.72rem;
+  }
+
+  /* Meter badge: strictly horizontal on single line */
+  .meter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: 'Inter', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap !important;
+  }
+  .meter-badge i {
+    color: #2563eb;
+    font-size: 0.72rem;
+  }
+
+  .code-badge {
+    display: inline-block;
+    background: #f8fafc;
+    color: #2563eb;
+    font-family: 'Inter', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+    padding: 2px 5px;
+    border-radius: 5px;
+    white-space: nowrap !important;
+  }
+
+  .badge-residential { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .badge-commercial { background: #ecfeff; color: #0369a1; border: 1px solid #bae6fd; }
+  .badge-agricultural { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .badge-industrial { background: #fefce8; color: #a16207; border: 1px solid #fef08a; }
+
+  .customer-avatar-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+</style>
+
+<div class="panel" style="overflow: hidden;">
+  <div class="panel-header">
+    <div class="panel-title">
+      <i class="fa-solid fa-address-book" style="color: var(--primary);"></i> បញ្ជីអតិថិជនទាំងអស់ ({{ customers|length }} នាក់)
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="custom-table" id="customersTable">
+      <colgroup>
+        <col class="col-code">
+        <col class="col-name">
+        <col class="col-phone">
+        <col class="col-address">
+        <col class="col-type">
+        <col class="col-meter">
+        <col class="col-action">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>លេខកូដ</th>
+          <th>ឈ្មោះអតិថិជន</th>
+          <th>លេខទូរស័ព្ទ</th>
+          <th>អាសយដ្ឋាន / ទីតាំងបង្គោល</th>
+          <th>ប្រភេទ</th>
+          <th>លេខកុងទ័រភ្ជាប់</th>
+          <th style="text-align: right;">សកម្មភាព</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td data-label="លេខកូដ">
+            <span class="code-badge">
+              {{ c.customer_code or ("%06d" % c.customer_id) }}
+            </span>
+          </td>
+          <td data-label="ឈ្មោះអតិថិជន">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              {% if c.photo_url %}
+              <img src="{{ c.photo_url }}" alt="Photo" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1; flex-shrink: 0;">
+              {% else %}
+              <div class="customer-avatar-icon">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              {% endif %}
+              <div style="min-width: 0; overflow: hidden;">
+                <div style="font-weight: 700; color: var(--text-primary); font-size: 0.86rem; line-height: 1.25; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis;" title="{{ (c.honorific ~ ' ') if c.honorific else '' }}{{ c.name }}">{{ (c.honorific ~ ' ') if c.honorific else '' }}{{ c.name }}</div>
+                {% if c.last_name_en or c.first_name_en %}
+                <div style="color: var(--text-muted); font-size: 0.72rem; line-height: 1.2; text-transform: uppercase;">{{ c.last_name_en or '' }} {{ c.first_name_en or '' }}</div>
+                {% else %}
+                <div style="color: var(--text-muted); font-size: 0.72rem; line-height: 1.2;">ចុះឈ្មោះ: {{ c.created_at[:10] if c.created_at else '' }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td data-label="លេខទូរស័ព្ទ">
+            {% if c.phone %}
+            <div class="phone-badge">
+              <i class="fa-solid fa-phone"></i>
+              <span>{{ c.phone }}</span>
+            </div>
+            {% else %}
+            <span style="color: #94a3b8;">-</span>
+            {% endif %}
+          </td>
+          <td data-label="អាសយដ្ឋាន">
+            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.35; overflow: hidden; text-overflow: ellipsis;" title="{{ c.address }}">{{ c.address }}</div>
+          </td>
+          <td data-label="ប្រភេទ">
+            {% if c.customer_type == 'Residential' %}
+              <span class="badge badge-residential" style="white-space: nowrap !important; font-size: 0.72rem; padding: 2px 7px;">លំនៅឋាន</span>
+            {% elif c.customer_type == 'Commercial' %}
+              <span class="badge badge-commercial" style="white-space: nowrap !important; font-size: 0.72rem; padding: 2px 7px;">ពាណិជ្ជកម្ម</span>
+            {% elif c.customer_type == 'Agricultural' %}
+              <span class="badge badge-agricultural" style="white-space: nowrap !important; font-size: 0.72rem; padding: 2px 7px;">កសិកម្ម</span>
+            {% elif c.customer_type == 'Industrial' %}
+              <span class="badge badge-industrial" style="white-space: nowrap !important; font-size: 0.72rem; padding: 2px 7px;">ឧស្សាហកម្ម</span>
+            {% else %}
+              <span class="badge" style="white-space: nowrap !important; font-size: 0.72rem; padding: 2px 7px;">{{ c.customer_type }}</span>
+            {% endif %}
+          </td>
+          <td data-label="លេខកុងទ័រ">
+            {% if c.meters %}
+              {% for m in c.meters %}
+                <div class="meter-badge">
+                  <i class="fa-solid fa-gauge"></i>
+                  <span>{{ m.meter_number }}</span>
+                </div>
+              {% endfor %}
+            {% else %}
+              <span style="color: var(--text-muted); font-style: italic; font-size: 0.78rem;">គ្មានកុងទ័រ</span>
+            {% endif %}
+          </td>
+          <td data-label="សកម្មភាព" style="text-align: right;">
+            <button onclick="openAddMeterModal({{ c.customer_id }}, '{{ c.name }}')" class="btn btn-secondary btn-sm" style="white-space: nowrap !important; padding: 3px 7px; font-size: 0.74rem;" title="ភ្ជាប់កុងទ័រថ្មី">
+              <i class="fa-solid fa-plus"></i> ភ្ជាប់កុងទ័រ
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal 1: Add Customer (Windows Dialog Format Matching Sample) -->
+<div class="win-modal-overlay" id="addCustomerModal">
+  <div class="win-modal-content">
+    <!-- Window Title Bar -->
+    <div class="win-modal-header">
+      <span class="win-modal-title">បន្ថែមអតិថិជន</span>
+      <button type="button" class="win-modal-close" onclick="closeModal('addCustomerModal')" title="បិទ">&times;</button>
+    </div>
+
+    <!-- Tabs Bar -->
+    <div class="win-tabs-bar">
+      <button type="button" class="win-tab-btn active" id="btnTabGeneral" onclick="switchCustomerTab('tabGeneral')">ព័ត៌មានទូទៅ</button>
+      <button type="button" class="win-tab-btn" id="btnTabUsage" onclick="switchCustomerTab('tabUsage')">ព័ត៌មានការប្រើប្រាស់</button>
+    </div>
+
+    <!-- Form -->
+    <form action="/customers/add" method="POST" id="customerForm">
+      <div class="win-modal-body">
+        <!-- TAB 1: ព័ត៌មានទូទៅ -->
+        <div id="tabGeneral" class="win-tab-pane">
+          <!-- Upper Grid (Identity & Profile + Photo Box) -->
+          <div class="win-form-upper">
+            <!-- Left Column -->
+            <div class="win-col-left">
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ងារ<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="honorific" class="win-select">
+                    <option value="លោក" selected>លោក</option>
+                    <option value="លោកស្រី">លោកស្រី</option>
+                    <option value="អ្នកនាង">អ្នកនាង</option>
+                    <option value="ឯកឧត្តម">ឯកឧត្តម</option>
+                    <option value="លោកជំទាវ">លោកជំទាវ</option>
+                    <option value="ព្រះតេជគុណ">ព្រះតេជគុណ</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>គោត្តនាម<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="last_name" id="custLastName" class="win-input" required placeholder="គោត្តនាម">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>នាម</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="first_name" id="custFirstName" class="win-input" placeholder="នាមខ្លួន">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ថ្ងៃខែឆ្នាំកំណើត</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="checkbox" id="chkHasDob" name="has_dob" value="1" onchange="toggleDobInput(this)" style="cursor:pointer;" title="ជ្រើសរើសបើមានថ្ងៃខែកំណើត">
+                  <input type="date" name="dob" id="inputDob" class="win-input" disabled style="flex:1;">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>កន្លែងកំណើត</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="pob" class="win-input" placeholder="ទីកន្លែងកំណើត">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ប្រភេទអត្តសញ្ញាណ</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="id_type" class="win-select">
+                    <option value="អត្តសញ្ញាណប័ណ្ណ" selected>អត្តសញ្ញាណប័ណ្ណ</option>
+                    <option value="សៀវភៅគ្រួសារ">សៀវភៅគ្រួសារ</option>
+                    <option value="លិខិតឆ្លងដែន">លិខិតឆ្លងដែន</option>
+                    <option value="សំបុត្រកំណើត">សំបុត្រកំណើត</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>អត្តសញ្ញាណ<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="id_number" class="win-input" placeholder="លេខអត្តសញ្ញាណ">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>អ្នកតំណាង</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="representative" class="win-input" placeholder="ឈ្មោះអ្នកតំណាង">
+                </div>
+              </div>
+            </div>
+
+            <!-- Middle Column -->
+            <div class="win-col-mid">
+              <div class="win-field-row">
+                <label class="win-field-label"><span>លេខកូដ<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="customer_code" class="win-input" value="{{ next_code }}" readonly>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>គោត្តនាមឡាតាំង</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="last_name_en" class="win-input" placeholder="Last Name">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>នាមឡាតាំង</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="first_name_en" class="win-input" placeholder="First Name">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ភេទ<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="gender" class="win-select">
+                    <option value="ប្រុស" selected>ប្រុស</option>
+                    <option value="ស្រី">ស្រី</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>មុខរបរ</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="occupation" class="win-input" placeholder="មុខរបរ / អាជីវកម្ម">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ចំនួនគ្រួសារ<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="number" name="family_count" class="win-input" value="1" min="1" required>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ប្រភេទអតិថិជន<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="customer_category" class="win-select">
+                    <option value="បុគ្គលមិនជាប់អាករ" selected>បុគ្គលមិនជាប់អាករ</option>
+                    <option value="លំនៅឋាន (Residential)">លំនៅឋាន (Residential)</option>
+                    <option value="អាជីវកម្ម (Commercial)">អាជីវកម្ម (Commercial)</option>
+                    <option value="កសិកម្ម (Agricultural)">កសិកម្ម (Agricultural)</option>
+                    <option value="ឧស្សាហកម្ម (Industrial)">ឧស្សាហកម្ម (Industrial)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row" style="padding-left: 125px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: #1e293b;">
+                  <input type="checkbox" name="is_poor_family" value="1"> គ្រួសារក្រីក្រ
+                </label>
+              </div>
+            </div>
+
+            <!-- Far Right: Photo Box -->
+            <div class="win-col-photo">
+              <div class="win-photo-box" onclick="document.getElementById('custPhotoFile').click()" title="ចុចដើម្បីជ្រើសរើសរូបថតអតិថិជន">
+                <img id="custPhotoPreview" class="win-photo-preview" style="display:none;" alt="រូបថត">
+                <div id="custPhotoPlaceholder" class="win-photo-placeholder">
+                  <i class="fa-regular fa-image"></i>
+                </div>
+              </div>
+              <div class="win-photo-label">រូបថត</div>
+              <input type="file" id="custPhotoFile" accept="image/*" style="display:none;" onchange="handlePhotoUpload(this)">
+              <input type="hidden" name="photo_url" id="custPhotoBase64">
+            </div>
+          </div>
+
+          <!-- Lower Grid: អាសយដ្ឋានទំនាក់ទំនង -->
+          <div class="win-section-title">អាសយដ្ឋានទំនាក់ទំនង</div>
+          <div class="win-form-lower">
+            <!-- Left Column of Address -->
+            <div class="win-col-left">
+              <div class="win-field-row">
+                <label class="win-field-label"><span>លេខទូរស័ព្ទ<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="phone" class="win-input" placeholder="012 345 678" required>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>លេខគណនី</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="account_number" class="win-input" placeholder="លេខគណនី">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ខេត្ត/រាជធានី<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="province" class="win-select">
+                    <option value="កណ្តាល" selected>កណ្តាល</option>
+                    <option value="ភ្នំពេញ">ភ្នំពេញ</option>
+                    <option value="សៀមរាប">សៀមរាប</option>
+                    <option value="បាត់ដំបង">បាត់ដំបង</option>
+                    <option value="កំពង់ចាម">កំពង់ចាម</option>
+                    <option value="កំពង់ឆ្នាំង">កំពង់ឆ្នាំង</option>
+                    <option value="កំពត">កំពត</option>
+                    <option value="តាកែវ">តាកែវ</option>
+                    <option value="ព្រៃវែង">ព្រៃវែង</option>
+                    <option value="ស្វាយរៀង">ស្វាយរៀង</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ស្រុក/ក្រុង<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="district" class="win-select">
+                    <option value="មុខកំពូល" selected>មុខកំពូល</option>
+                    <option value="ខ្សាច់កណ្តាល">ខ្សាច់កណ្តាល</option>
+                    <option value="កៀនស្វាយ">កៀនស្វាយ</option>
+                    <option value="តាខ្មៅ">តាខ្មៅ</option>
+                    <option value="ពញាឮ">ពញាឮ</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ឃុំ/សង្កាត់<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="commune" class="win-select">
+                    <option value="ឫស្សីជ្រោយ" selected>ឫស្សីជ្រោយ</option>
+                    <option value="ព្រែកដំបង">ព្រែកដំបង</option>
+                    <option value="ស្វាយអំពារ">ស្វាយអំពារ</option>
+                    <option value="រការកោង">រការកោង</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ភូមិ/ក្រុម<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="village" class="win-select">
+                    <option value="ឫស្សីជ្រោយ" selected>ឫស្សីជ្រោយ</option>
+                    <option value="វត្តថ្មី">វត្តថ្មី</option>
+                    <option value="ព្រែកដំបង">ព្រែកដំបង</option>
+                    <option value="កោះដាច់">កោះដាច់</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column of Address -->
+            <div class="win-col-mid">
+              <div class="win-field-row">
+                <label class="win-field-label"><span>តំបន់<span class="req">*</span></span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="area" class="win-select">
+                    <option value="ឫស្សីជ្រោយ" selected>ឫស្សីជ្រោយ</option>
+                    <option value="វត្តថ្មី">វត្តថ្មី</option>
+                    <option value="ព្រែកដំបង">ព្រែកដំបង</option>
+                    <option value="តំបន់ A">តំបន់ A</option>
+                    <option value="តំបន់ B">តំបន់ B</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ផ្ទះលេខ</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="house_no" class="win-input" placeholder="ផ្ទះលេខ">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ផ្លូវលេខ</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="street_no" class="win-input" placeholder="ផ្លូវលេខ">
+                </div>
+              </div>
+
+              <div class="win-field-row" style="align-items: flex-start;">
+                <label class="win-field-label" style="padding-top: 4px;"><span>អាសយដ្ឋាន</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <textarea name="address" rows="3" class="win-textarea" placeholder="ពិពណ៌នាអាសយដ្ឋានបន្ថែម..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: ព័ត៌មានការប្រើប្រាស់ -->
+        <div id="tabUsage" class="win-tab-pane" style="display:none;">
+          <div class="win-section-title">ព័ត៌មាននាឡិកាស្ទង់ និងការតភ្ជាប់ថាមពល (Meter Connection)</div>
+          <div class="win-form-lower" style="margin-top: 8px;">
+            <div class="win-col-left">
+              <div class="win-field-row">
+                <label class="win-field-label"><span>លេខកុងទ័រ</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="meter_number" class="win-input" placeholder="ឧ. EDC-2026-M0105">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>លេខទីតាំង / បង្គោល</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="text" name="location_code" class="win-input" placeholder="ឧ. P-014, J01">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ទំហំនាឡិកា</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="meter_size" class="win-select">
+                    <option value="15mm" selected>15mm</option>
+                    <option value="20mm">20mm</option>
+                    <option value="32mm">32mm</option>
+                    <option value="50mm">50mm</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ប្រភេទតង់ស្យុង</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <select name="phase" class="win-select">
+                    <option value="1 Phase 220V" selected>1 Phase 220V</option>
+                    <option value="3 Phase 380V">3 Phase 380V</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="win-col-mid">
+              <div class="win-field-row">
+                <label class="win-field-label"><span>ថ្ងៃតភ្ជាប់</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="date" name="installation_date" class="win-input">
+                </div>
+              </div>
+
+              <div class="win-field-row">
+                <label class="win-field-label"><span>អំណានដំបូង (kWh)</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <input type="number" step="1" name="initial_reading" class="win-input" value="0">
+                </div>
+              </div>
+
+              <div class="win-field-row" style="align-items: flex-start;">
+                <label class="win-field-label" style="padding-top: 4px;"><span>កំណត់ចំណាំ</span><span class="colon">:</span></label>
+                <div class="win-field-ctrl">
+                  <textarea name="meter_notes" rows="3" class="win-textarea" placeholder="កំណត់ចំណាំអំពីកុងទ័រ..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Footer -->
+      <div class="win-modal-footer">
+        <button type="submit" class="win-btn win-btn-save" id="btnSubmitCustomer">រក្សាទុក</button>
+        <button type="button" class="win-btn win-btn-close" onclick="closeModal('addCustomerModal')">បិទ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 2: Add Meter to existing customer -->
+<div class="modal-overlay" id="addMeterModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.15rem; font-weight: 600;"><i class="fa-solid fa-gauge" style="color: var(--accent-cyan);"></i> ភ្ជាប់កុងទ័រថ្មី</h3>
+      <button class="modal-close" onclick="closeModal('addMeterModal')">&times;</button>
+    </div>
+
+    <form action="/meters/add" method="POST">
+      <input type="hidden" name="customer_id" id="modalMeterCustomerId">
+      
+      <div class="form-group">
+        <label class="form-label">អតិថិជន:</label>
+        <input type="text" id="modalMeterCustomerName" class="form-control" readonly style="background: #f8fafc; color: #64748b; font-weight: 600;">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="modalMeterNum">លេខកូដកុងទ័រ (Meter Number) *</label>
+        <input type="text" id="modalMeterNum" name="meter_number" class="form-control" placeholder="ឧ. EDC-2026-M0105" required>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addMeterModal')">បោះបង់</button>
+        <button type="submit" class="btn btn-primary">ភ្ជាប់កុងទ័រ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddMeterModal(customerId, customerName) {
+    document.getElementById('modalMeterCustomerId').value = customerId;
+    document.getElementById('modalMeterCustomerName').value = customerName;
+    openModal('addMeterModal');
+  }
+
+  function switchCustomerTab(tabId) {
+    const isGeneral = tabId === 'tabGeneral';
+    document.getElementById('tabGeneral').style.display = isGeneral ? 'block' : 'none';
+    document.getElementById('tabUsage').style.display = isGeneral ? 'none' : 'block';
+    document.getElementById('btnTabGeneral').classList.toggle('active', isGeneral);
+    document.getElementById('btnTabUsage').classList.toggle('active', !isGeneral);
+  }
+
+  function toggleDobInput(cb) {
+    const input = document.getElementById('inputDob');
+    input.disabled = !cb.checked;
+    if (cb.checked && !input.value) {
+      input.value = '1990-01-01';
+    }
+  }
+
+  function handlePhotoUpload(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById('custPhotoPreview');
+        const placeholder = document.getElementById('custPhotoPlaceholder');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+        document.getElementById('custPhotoBase64').value = e.target.result;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+</script>
+{% endblock %}

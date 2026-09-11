@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}ការទូទាត់ប្រាក់ - E-Power{% endblock %}
+{% block header_title %}ការទូទាត់ប្រាក់ (Payments & KHQR){% endblock %}
+{% block header_subtitle %}កត់ត្រាការបង់ប្រាក់សាច់ប្រាក់ ឬ KHQR និងតាមដានបំណុលយឺតយ៉ាវ{% endblock %}
+
+{% block content %}
+<style>
+  @media (min-width: 1024px) {
+    .table-responsive {
+      width: 100% !important;
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
+    }
+    .payments-table {
+      width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse;
+    }
+  }
+</style>
+<div class="payments-main-grid">
+  <!-- Payment Form -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fa-solid fa-cash-register" style="color: var(--accent-emerald);"></i> ទទួលការទូទាត់ប្រាក់
+      </div>
+    </div>
+
+    <form action="/payments/process" method="POST" id="paymentForm">
+      <div class="form-group">
+        <label class="form-label" for="invoiceSelect">ជ្រើសរើសវិក្កយបត្រត្រូវបង់ *</label>
+        <select id="invoiceSelect" name="invoice_id" class="form-control" required>
+          <option value="" disabled selected>-- ជ្រើសរើសវិក្កយបត្រ --</option>
+          {% for u in unpaid_invoices %}
+          <option value="{{ u.invoice_id }}" 
+                  data-balance="{{ u.outstanding_balance }}"
+                  data-total="{{ u.total_amount }}"
+                  data-customer="{{ u.customer_name }}"
+                  data-kwh="{{ u.total_kwh }}">
+            INV-{{ "%05d" % u.invoice_id }} | {{ u.customer_name }} (នៅសល់: {{ "{:,.0f}".format(u.outstanding_balance) }} ៛)
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paymentAmountInput">ចំនួនទឹកប្រាក់ត្រូវបង់ (KHR) *</label>
+        <input type="number" step="100" id="paymentAmountInput" name="amount_paid" class="form-control" placeholder="0" required>
+        <small style="color: var(--text-muted); font-size: 0.78rem;">អាចបង់គ្រប់ចំនួន ឬបង់ខ្លះ (Partial Payment)</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">វិធីសាស្ត្រទូទាត់ (Payment Method) *</label>
+        <div class="payment-methods-grid">
+          <label style="border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; color: #0f172a;">
+            <input type="radio" name="payment_method" value="KHQR" checked style="accent-color: var(--primary);">
+            <div style="font-weight: 700; margin-top: 4px; color: #2563eb;"><i class="fa-solid fa-qrcode"></i> KHQR</div>
+          </label>
+          <label style="border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; color: #0f172a;">
+            <input type="radio" name="payment_method" value="Cash" style="accent-color: var(--primary);">
+            <div style="font-weight: 700; margin-top: 4px; color: #059669;"><i class="fa-solid fa-money-bill-wave"></i> Cash</div>
+          </label>
+          <label style="border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; color: #0f172a;">
+            <input type="radio" name="payment_method" value="Bank_Transfer" style="accent-color: var(--primary);">
+            <div style="font-weight: 700; margin-top: 4px; color: #4f46e5;"><i class="fa-solid fa-building-columns"></i> Bank</div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paymentNotes">កំណត់ចំណាំ (Notes)</label>
+        <input type="text" id="paymentNotes" name="notes" class="form-control" placeholder="ឧ. បង់តាម App ធនាគារ ABA / Wing KHQR">
+      </div>
+
+      <button type="submit" class="btn btn-success" id="btnSubmitPayment" style="width: 100%;">
+        <i class="fa-solid fa-check-double"></i> បញ្ជាក់ការទទួលប្រាក់
+      </button>
+    </form>
+  </div>
+
+  <!-- Payments History -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fa-solid fa-receipt" style="color: var(--accent-emerald);"></i> ប្រវត្តិការទូទាត់ថ្មីៗ
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table payments-table">
+        <colgroup>
+          <col style="width: 20%;">
+          <col style="width: 28%;">
+          <col style="width: 20%;">
+          <col style="width: 16%;">
+          <col style="width: 16%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>លេខវិក្កយបត្រ</th>
+            <th>អតិថិជន</th>
+            <th>ចំនួនទឹកប្រាក់</th>
+            <th>វិធីសាស្ត្រ</th>
+            <th>កាលបរិច្ឆេទ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td data-label="លេខវិក្កយបត្រ">
+              <a href="/invoices/{{ p.invoice_id }}" style="color: #2563eb; text-decoration: none; font-weight: 600;">
+                INV-{{ "%05d" % p.invoice_id }}
+              </a>
+            </td>
+            <td data-label="អតិថិជន">{{ p.customer_name }}</td>
+            <td data-label="ចំនួនទឹកប្រាក់"><strong style="color: #059669;">{{ "{:,.0f}".format(p.amount_paid) }} ៛</strong></td>
+            <td data-label="វិធីសាស្ត្រ">
+              {% if p.payment_method == 'KHQR' %}
+                <span class="badge badge-paid"><i class="fa-solid fa-qrcode"></i> KHQR</span>
+              {% elif p.payment_method == 'Cash' %}
+                <span class="badge badge-partial"><i class="fa-solid fa-money-bill"></i> Cash</span>
+              {% else %}
+                <span class="badge badge-commercial"><i class="fa-solid fa-building-columns"></i> Bank</span>
+              {% endif %}
+            </td>
+            <td data-label="កាលបរិច្ឆេទ"><small style="color: var(--text-muted);">{{ p.payment_date[:16] if p.payment_date else '' }}</small></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const invSelect = document.getElementById('invoiceSelect');
+  const payInput = document.getElementById('paymentAmountInput');
+
+  function updateBalance() {
+    if (invSelect.selectedIndex > 0) {
+      const opt = invSelect.options[invSelect.selectedIndex];
+      const bal = opt.getAttribute('data-balance');
+      if (bal) {
+        payInput.value = parseFloat(bal);
+      }
+    }
+  }
+
+  invSelect.addEventListener('change', updateBalance);
+  updateBalance();
+</script>
+{% endblock %}

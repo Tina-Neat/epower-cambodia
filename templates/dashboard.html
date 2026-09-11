@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}ផ្ទាំងគ្រប់គ្រង - E-Power Cambodia{% endblock %}
+{% block header_title %}ផ្ទាំងគ្រប់គ្រងប្រព័ន្ធ (Dashboard){% endblock %}
+{% block header_subtitle %}ទិដ្ឋភាពទូទៅនៃចំណូល ការប្រើប្រាស់អគ្គិសនី និងបំណុល{% endblock %}
+
+{% block top_actions %}
+<a href="/readings" class="btn btn-primary btn-sm" id="btnQuickRecord">
+  <i class="fa-solid fa-plus"></i> កត់ត្រាកុងទ័រ
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Inline Dedicated Responsive Styling for Dashboard -->
+<style>
+  @media (min-width: 1024px) {
+    .table-responsive {
+      width: 100% !important;
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
+    }
+    #dashboardRecentTable {
+      width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse;
+    }
+    .dash-col-id { width: 17%; }
+    .dash-col-cust { width: 27%; }
+    .dash-col-kwh { width: 14%; }
+    .dash-col-amt { width: 16%; }
+    .dash-col-status { width: 14%; }
+    .dash-col-act { width: 12%; }
+  }
+</style>
+
+<!-- Welcome Brand Hero Banner -->
+<div class="dashboard-hero-banner panel" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-left: 5px solid var(--primary); padding: 20px 24px; margin-bottom: 24px;">
+  <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+    <img src="/img/E-power-logo.png" alt="E-Power Logo" style="height: 52px; max-width: 180px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; background: #ffffff; padding: 2px;">
+    <div>
+      <h2 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; letter-spacing: -0.01em;">
+        ស្ថានីយអគ្គិសនី អ៊ី-ផៅវ័រ (E-POWER CAMBODIA)
+      </h2>
+      <p style="font-size: 0.82rem; color: #64748b; margin: 0;">
+        ប្រព័ន្ធគ្រប់គ្រងការប្រើប្រាស់ គណនា kWh និងចេញវិក្កយបត្រអគ្គិសនី (Online & Offline)
+      </p>
+    </div>
+  </div>
+  <div class="hero-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="/readings" class="btn btn-primary btn-sm"><i class="fa-solid fa-gauge-high"></i> កត់ត្រាកុងទ័រ</a>
+    <a href="/invoices" class="btn btn-secondary btn-sm"><i class="fa-solid fa-file-invoice-dollar"></i> បញ្ជីវិក្កយបត្រ</a>
+  </div>
+</div>
+
+<!-- KPI Metrics Grid -->
+<div class="metrics-grid">
+  <!-- Metric 1: Total Billed -->
+  <div class="metric-card">
+    <div class="metric-header">
+      <span class="metric-label">ប្រាក់ចេញវិក្កយបត្រសរុប</span>
+      <div class="metric-icon-wrap icon-blue">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+      </div>
+    </div>
+    <div class="metric-value">{{ "{:,.0f}".format(stats.total_billed) }} ៛</div>
+    <div class="metric-sub">{{ stats.total_invoices }} វិក្កយបត្របានចេញ</div>
+  </div>
+
+  <!-- Metric 2: Total Collected -->
+  <div class="metric-card">
+    <div class="metric-header">
+      <span class="metric-label">ប្រាក់ប្រមូលបានសរុប</span>
+      <div class="metric-icon-wrap icon-green">
+        <i class="fa-solid fa-sack-dollar"></i>
+      </div>
+    </div>
+    <div class="metric-value">{{ "{:,.0f}".format(stats.total_collected) }} ៛</div>
+    <div class="metric-sub">អត្រាប្រមូលបាន {{ stats.collection_rate }}%</div>
+  </div>
+
+  <!-- Metric 3: Outstanding Debt -->
+  <div class="metric-card">
+    <div class="metric-header">
+      <span class="metric-label">បំណុលមិនទាន់ទូទាត់</span>
+      <div class="metric-icon-wrap icon-rose">
+        <i class="fa-solid fa-hand-holding-dollar"></i>
+      </div>
+    </div>
+    <div class="metric-value" style="color: #fb7185;">{{ "{:,.0f}".format(stats.net_debt) }} ៛</div>
+    <div class="metric-sub">{{ stats.debtor_count }} អតិថិជនជំពាក់</div>
+  </div>
+
+  <!-- Metric 4: Total kWh Consumed -->
+  <div class="metric-card">
+    <div class="metric-header">
+      <span class="metric-label">ថាមពលប្រើប្រាស់សរុប</span>
+      <div class="metric-icon-wrap icon-cyan">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+    </div>
+    <div class="metric-value">{{ "{:,.1f}".format(stats.total_kwh) }} <span style="font-size: 1rem; font-weight: 500;">kWh</span></div>
+    <div class="metric-sub">គិតជាមធ្យម {{ stats.avg_kwh_per_meter }} kWh/កុងទ័រ</div>
+  </div>
+</div>
+
+<!-- Online & Offline Access Status Banner -->
+<div class="network-info-banner panel" style="padding: 14px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <div style="width: 38px; height: 38px; border-radius: var(--radius-sm); background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 1.1rem; flex-shrink: 0;">
+      <i class="fa-solid fa-network-wired"></i>
+    </div>
+    <div>
+      <div style="font-weight: 700; font-size: 0.9rem; color: #0f172a;">ប្រព័ន្ធគាំទ្រទាំង Online & Offline (Local Network Enabled)</div>
+      <div style="font-size: 0.78rem; color: #64748b;">ទិន្នន័យទាំងអស់រក្សាទុកក្នុង SQLite ក្នុងស្រុក ដំណើរការបាន ១០០%</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; font-size: 0.78rem; font-family: monospace; flex-wrap: wrap; max-width: 100%;">
+    {% if is_cloud %}
+    <div style="background: #f0fdf4; padding: 5px 10px; border-radius: 6px; border: 1px solid #86efac; word-break: break-all;">
+      <span style="color: #15803d; font-weight: 700;">🌐 Internet Cloud:</span> <strong style="color: #16a34a;">{{ proto }}://{{ host_header }}</strong>
+    </div>
+    {% else %}
+    <div style="background: #f8fafc; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-glass); word-break: break-all;">
+      <span style="color: #64748b;">Offline:</span> <strong style="color: #2563eb;">http://localhost:8000</strong>
+    </div>
+    <div style="background: #f8fafc; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-glass); word-break: break-all;">
+      <span style="color: #64748b;">LAN/WiFi:</span> <strong style="color: #059669;">http://{{ local_ip }}:8000</strong>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="dashboard-main-grid" style="margin-bottom: 30px;">
+  <!-- Recent Invoices Panel -->
+  <div class="panel" style="margin-bottom: 0;">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fa-solid fa-receipt" style="color: var(--primary);"></i> វិក្កយបត្រថ្មីៗ
+      </div>
+      <a href="/invoices" class="btn btn-secondary btn-sm" style="white-space: nowrap;">មើលទាំងអស់</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table" id="dashboardRecentTable">
+        <colgroup>
+          <col class="dash-col-id">
+          <col class="dash-col-cust">
+          <col class="dash-col-kwh">
+          <col class="dash-col-amt">
+          <col class="dash-col-status">
+          <col class="dash-col-act">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>លេខវិក្កយបត្រ</th>
+            <th>អតិថិជន</th>
+            <th>ថាមពល (kWh)</th>
+            <th>ទឹកប្រាក់សរុប</th>
+            <th>ស្ថានភាព</th>
+            <th style="text-align: right;">សកម្មភាព</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in recent_invoices %}
+          <tr>
+            <td data-label="លេខវិក្កយបត្រ"><strong>INV-{{ "%05d" % inv.invoice_id }}</strong></td>
+            <td data-label="អតិថិជន">
+              <div style="min-width: 0;">
+                <div style="font-weight: 600; text-overflow: ellipsis;" title="{{ inv.customer_name }}">{{ inv.customer_name }}</div>
+                <small style="color: var(--text-muted); font-family: monospace;">{{ inv.meter_number }}</small>
+              </div>
+            </td>
+            <td data-label="ថាមពល (kWh)">{{ "{:,.1f}".format(inv.total_kwh) }} kWh</td>
+            <td data-label="ទឹកប្រាក់សរុប"><strong>{{ "{:,.0f}".format(inv.total_amount) }} ៛</strong></td>
+            <td data-label="ស្ថានភាព">
+              {% if inv.status == 'Paid' %}
+                <span class="badge badge-paid" style="white-space: nowrap;"><i class="fa-solid fa-circle-check"></i> បង់រួច</span>
+              {% elif inv.status == 'Overdue' %}
+                <span class="badge badge-overdue" style="white-space: nowrap;"><i class="fa-solid fa-circle-exclamation"></i> ហួសកំណត់</span>
+              {% elif inv.status == 'Partially Paid' %}
+                <span class="badge badge-partial" style="white-space: nowrap;"><i class="fa-solid fa-clock-rotate-left"></i> បង់ខ្លះ</span>
+              {% else %}
+                <span class="badge badge-unpaid" style="white-space: nowrap;"><i class="fa-solid fa-hourglass-half"></i> មិនទាន់បង់</span>
+              {% endif %}
+            </td>
+            <td data-label="សកម្មភាព" style="text-align: right;">
+              <a href="/invoices/{{ inv.invoice_id }}" class="btn btn-secondary btn-sm" title="មើលវិក្កយបត្រ" style="white-space: nowrap;">
+                <i class="fa-regular fa-eye"></i> មើល
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Side Quick Summary & Actions -->
+  <div class="panel" style="margin-bottom: 0;">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fa-solid fa-sliders" style="color: var(--accent-cyan);"></i> ប្រភេទអតិថិជន
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+      {% for item in revenue_by_type %}
+      <div style="padding: 12px 14px; background: #f8fafc; border-radius: var(--radius-sm); border: 1px solid var(--border-glass); width: 100%; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px;">
+          <span style="font-weight: 700; font-size: 0.9rem; color: #0f172a;">{{ item.customer_type }}</span>
+          <span class="badge badge-{{ item.customer_type|lower }}" style="white-space: nowrap;">{{ item.total_customers }} នាក់</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #64748b; gap: 8px;">
+          <span style="white-space: nowrap;">{{ "{:,.1f}".format(item.total_kwh_consumed or 0) }} kWh</span>
+          <span style="color: #2563eb; font-weight: 700; white-space: nowrap;">{{ "{:,.0f}".format(item.total_billed_amount or 0) }} ៛</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-glass); display: flex; flex-direction: column; gap: 10px;">
+      <a href="/customers" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+        <i class="fa-solid fa-user-plus"></i> ចុះឈ្មោះអតិថិជនថ្មី
+      </a>
+      <a href="/payments" class="btn btn-success" style="width: 100%; justify-content: center;">
+        <i class="fa-solid fa-hand-holding-dollar"></i> ទទួលការបង់ប្រាក់
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

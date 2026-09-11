@@ -1,0 +1,963 @@
+{% extends "base.html" %}
+
+{% block title %}កត់ត្រាលេខកុងទ័រ - E-Power{% endblock %}
+{% block header_title %}កត់ត្រាការប្រើប្រាស់អគ្គិសនី (Meter Readings){% endblock %}
+{% block header_subtitle %}បញ្ចូលទិន្នន័យកុងទ័រប្រចាំខែ គណនាតម្លៃតាមកាំ ឬតម្លៃថេរ និងចេញវិក្កយបត្រស្វ័យប្រវត្តិ{% endblock %}
+
+{% block content %}
+<!-- Inline Dedicated Styling for Exact Form Design -->
+<style>
+  .meter-page-grid {
+    display: grid;
+    grid-template-columns: 460px 1fr;
+    gap: 28px;
+    align-items: start;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .meter-page-grid > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  @media (max-width: 1100px) {
+    .meter-page-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+  }
+
+  /* Form Card matching exact sample image */
+  .meter-entry-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px 26px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    color: #1e293b !important;
+    font-family: var(--font-sans);
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 600px) {
+    .meter-entry-card {
+      padding: 18px 14px;
+    }
+  }
+
+  .meter-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .meter-card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  .meter-form-group {
+    margin-bottom: 18px;
+  }
+
+  .meter-form-label {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+  }
+
+  .meter-form-label-blue {
+    color: #2563eb !important;
+  }
+
+  .meter-form-control {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: var(--font-sans);
+  }
+
+  .meter-form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  .meter-form-control-readonly {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0;
+    color: #64748b !important;
+    font-weight: 600;
+    cursor: not-allowed;
+  }
+
+  .meter-form-control-current {
+    border: 1px solid #cbd5e1;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .meter-form-control-current::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+  }
+
+  /* Pricing Policy Group */
+  /* Pricing Policy Group - Clean Tiles System */
+  .pricing-policy-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 14px;
+    margin-bottom: 18px;
+    background: #ffffff;
+  }
+
+  .pricing-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .pricing-policy-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0;
+  }
+
+  .btn-auto-pill {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+    font-family: var(--font-sans);
+  }
+
+  .btn-auto-pill:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  }
+
+  /* Pricing Tiles */
+  .pricing-tiles-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pricing-tile {
+    display: block;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  .pricing-tile:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+  }
+
+  .pricing-tile.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  .pricing-tile-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .pricing-tile-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .pricing-tile-left input[type="radio"] {
+    width: 17px;
+    height: 17px;
+    accent-color: #2563eb;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .pricing-tile-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .tile-number-input {
+    width: 72px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.92rem;
+    border: 1px solid #94a3b8;
+    border-radius: 6px;
+    padding: 3px 6px;
+    color: #0f172a;
+    background: #ffffff;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .tile-number-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  }
+
+  .tile-unit-text {
+    font-size: 0.82rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  /* Tiered Sub-grid inside Tile 2 */
+  .tiered-subgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+    padding-left: 25px;
+  }
+
+  .tiered-subbox {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+  }
+
+  .tiered-subbox span {
+    color: #475569;
+    font-weight: 500;
+  }
+
+  .tiered-subbox input {
+    width: 54px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 2px 4px;
+    color: #0f172a;
+    background: #f8fafc;
+    outline: none;
+    font-family: var(--font-sans);
+  }
+
+  .tiered-subbox input:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+
+  .auto-subtext {
+    padding-left: 25px;
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 3px;
+  }
+
+  /* Realtime Calculation Preview Box */
+  .live-calc-card {
+    border: 1px solid #bae6fd;
+    background: #f0f9ff;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+  }
+
+  .live-calc-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #0f172a;
+  }
+
+  .live-calc-bolt {
+    color: #f97316;
+    font-size: 1.15rem;
+  }
+
+  .live-calc-breakdown {
+    margin-top: 8px;
+    font-size: 0.88rem;
+    color: #64748b;
+    line-height: 1.8;
+  }
+
+  .live-calc-divider {
+    border-top: 1px dashed #cbd5e1;
+    margin: 12px 0;
+  }
+
+  .live-calc-total-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .live-calc-total-label {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.98rem;
+  }
+
+  .live-calc-total-amount {
+    font-weight: 800;
+    font-size: 1.35rem;
+    color: #2563eb;
+  }
+
+  /* Submit Button */
+  .meter-btn-submit {
+    width: 100%;
+    background: #2563eb;
+    color: #ffffff;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 13px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    font-family: var(--font-sans);
+  }
+
+  .meter-btn-submit:hover {
+    background: #1d4ed8;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  }
+
+  .meter-btn-submit:active {
+    transform: translateY(1px);
+  }
+
+  /* Anomaly Banner */
+  .reading-anomaly-box {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.86rem;
+    margin-bottom: 16px;
+    display: none;
+  }
+</style>
+
+<!-- Offline Queue Notification Banner -->
+<div id="offlineQueueBanner" class="offline-queue-banner" style="display: none;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.2rem;"></i>
+    <div>
+      <span style="font-weight: 600;">របៀប Offline៖</span> មាន <strong id="offlineCount">0</strong> កំណត់ត្រាក្នុងអង្គចងចាំកុំព្យូទ័រ/ទូរស័ព្ទរង់ចាំ Sync
+    </div>
+  </div>
+  <button type="button" class="btn btn-sm btn-primary" id="btnSyncOfflineReadings">
+    <i class="fa-solid fa-rotate"></i> ធ្វើសមកាលកម្ម (Sync Now)
+  </button>
+</div>
+
+<div class="meter-page-grid">
+  <!-- Left Column: Modern Recording Form matching User Sample -->
+  <div class="meter-entry-card">
+    <div class="meter-card-header">
+      <span style="font-size: 1.3rem;">📝</span>
+      <h2>បញ្ចូលទិន្នន័យកុងទ័រប្រចាំខែ</h2>
+    </div>
+
+    <!-- Alert Box for Validation -->
+    <div id="alertWarningBox" class="reading-anomaly-box"></div>
+
+    <form action="/readings/record" method="POST" id="readingForm">
+      <!-- Hidden reading_date derived from month/today for backend compatibility -->
+      <input type="hidden" name="reading_date" id="hiddenReadingDate" value="{{ today }}">
+      <input type="hidden" name="auto_generate_invoice" value="true">
+
+      <!-- Field 1: Customer Select -->
+      <div class="meter-form-group">
+        <label class="meter-form-label" for="meterSelect">ជ្រើសរើសអតិថិជន (Select Customer) <span style="color: #2563eb;">*</span></label>
+        <select id="meterSelect" name="meter_id" class="meter-form-control" required>
+          <option value="" disabled selected>-- សូមជ្រើសរើសអតិថិជន --</option>
+          {% for m in meters %}
+          <option value="{{ m.meter_id }}" 
+                  data-latest-reading="{{ m.latest_reading }}" 
+                  data-meter-number="{{ m.meter_number }}" 
+                  data-customer-name="{{ m.customer_name }}"
+                  data-customer-type="{{ m.customer_type }}">
+            {{ m.customer_name }} ({{ m.meter_number }}) - {{ m.customer_type }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Field 2: Billing Month -->
+      <div class="meter-form-group">
+        <label class="meter-form-label" for="billingMonthInput">ខែ/ឆ្នាំ គិតលុយ (Billing Month) <span style="color: #2563eb;">*</span></label>
+        <input type="month" id="billingMonthInput" name="billing_month" class="meter-form-control" value="{{ current_month or '2026-09' }}" required>
+      </div>
+
+      <!-- Field 3: Previous Reading (Readonly / Auto) -->
+      <div class="meter-form-group">
+        <label class="meter-form-label" for="prevReadingInput">
+          លេខកុងទ័រចាស់ (Previous Reading) <span style="color: #64748b; font-weight: 500;">[ស្វ័យប្រវត្តិ]</span>
+        </label>
+        <input type="number" step="0.01" id="prevReadingInput" name="previous_reading" class="meter-form-control meter-form-control-readonly" value="0.00" readonly>
+      </div>
+
+      <!-- Field 4: Current Reading -->
+      <div class="meter-form-group">
+        <label class="meter-form-label meter-form-label-blue" for="currReadingInput">លេខកុងទ័រថ្មី (Current Reading) <span style="color: #2563eb;">*</span></label>
+        <input type="number" step="0.01" id="currReadingInput" name="current_reading" class="meter-form-control meter-form-control-current" placeholder="ឧ. 150.00" required>
+      </div>
+
+      <!-- Field 5: Pricing Policy Selection -->
+      <div class="pricing-policy-card">
+        <div class="pricing-header-row">
+          <div class="pricing-policy-title">
+            ជម្រើសតម្លៃភ្លើង (Pricing Policy):
+          </div>
+          <button type="button" id="btnAutoPricing" class="btn-auto-pill" title="កំណត់តម្លៃស្វ័យប្រវត្តិតាមប្រភេទអតិថិជន">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> ស្វ័យប្រវត្តិ
+          </button>
+        </div>
+        
+        <div class="pricing-tiles-container">
+          <!-- Option 1: Flat Rate -->
+          <label class="pricing-tile active" id="tileFlat">
+            <div class="pricing-tile-main">
+              <div class="pricing-tile-left">
+                <input type="radio" name="pricing_policy" value="flat" id="policyFlat" checked>
+                <span>តម្លៃថេរ (Flat Rate)</span>
+              </div>
+              <div class="pricing-tile-right">
+                <input type="number" id="flatRateInput" name="flat_rate" value="800" min="50" max="5000" step="50" class="tile-number-input">
+                <span class="tile-unit-text">៛/kWh</span>
+              </div>
+            </div>
+          </label>
+
+          <!-- Option 2: Custom Tiered -->
+          <label class="pricing-tile" id="tileTiered">
+            <div class="pricing-tile-main">
+              <div class="pricing-tile-left">
+                <input type="radio" name="pricing_policy" value="tiered" id="policyTiered">
+                <span>តាមកាំកំណត់ផ្ទាល់ (Tiered)</span>
+              </div>
+            </div>
+            <div class="tiered-subgrid">
+              <div class="tiered-subbox">
+                <span>0 - 50 kWh:</span>
+                <div>
+                  <input type="number" id="tier1RateInput" name="tier1_rate" value="400" min="50" max="5000" step="50">
+                  <span style="font-size: 0.8rem; color: #64748b;">៛</span>
+                </div>
+              </div>
+              <div class="tiered-subbox">
+                <span>> 50 kWh:</span>
+                <div>
+                  <input type="number" id="tier2RateInput" name="tier2_rate" value="600" min="50" max="5000" step="50">
+                  <span style="font-size: 0.8rem; color: #64748b;">៛</span>
+                </div>
+              </div>
+            </div>
+          </label>
+
+          <!-- Option 3: Auto EDC Standard -->
+          <label class="pricing-tile" id="tileAuto">
+            <div class="pricing-tile-main">
+              <div class="pricing-tile-left">
+                <input type="radio" name="pricing_policy" value="auto" id="policyAuto">
+                <span>ស្វ័យប្រវត្តិ EDC (Auto)</span>
+              </div>
+              <span id="autoCustomerTypeBadge" class="badge badge-info" style="font-size: 0.74rem; padding: 2px 7px;">
+                លំនៅឋាន
+              </span>
+            </div>
+            <div class="auto-subtext">
+              គណនាស្វ័យប្រវត្តិតាមកាំពន្ធស្តង់ដាររដ្ឋ EDC
+            </div>
+          </label>
+        </div>
+
+        <!-- Auto Toast message -->
+        <div id="pricingAutoToast" style="display: none; margin-top: 8px; font-size: 0.8rem; color: #16a34a; font-weight: 600; padding: 5px 10px; background: #f0fdf4; border-radius: 6px; border: 1px solid #bbf7d0; text-align: center;">
+          <i class="fa-solid fa-circle-check"></i> បានកំណត់តម្លៃស្វ័យប្រវត្តិរួចរាល់!
+        </div>
+      </div>
+
+      <!-- Field 6: Realtime Calculation Preview Box -->
+      <div class="live-calc-card">
+        <div class="live-calc-header">
+          <span class="live-calc-bolt">⚡</span>
+          <span>ថាមពលប្រើប្រាស់: <span id="kwhValDisplay">0.00</span> kWh</span>
+        </div>
+        
+        <div class="live-calc-breakdown" id="liveCalcBreakdownContainer">
+          <div id="tier1Display">• កាំទី ១ (1 - 50 kWh): <span id="t1Kwh">0</span> kWh × <span id="t1RateDisplay">400</span>៛ = <span id="t1Cost">0</span> ៛</div>
+          <div id="tier2Display">• កាំទី ២ (> 50 kWh): <span id="t2Kwh">0</span> kWh × <span id="t2RateDisplay">600</span>៛ = <span id="t2Cost">0</span> ៛</div>
+          <div id="flatDisplay" style="display: none;">• តម្លៃថេរ (Flat Rate): <span id="flatKwh">0</span> kWh × <span id="flatRateDisplay">800</span>៛ = <span id="flatCost">0</span> ៛</div>
+          <div id="autoEdcDisplay" style="display: none;"></div>
+          <div id="subsidyDisplay" style="display: none; color: #16a34a; font-weight: 600;">• ឧបត្ថម្ភធនពីរដ្ឋ: -<span id="subsidyVal">0</span> ៛</div>
+        </div>
+
+        <div class="live-calc-divider"></div>
+
+        <div class="live-calc-total-line">
+          <span class="live-calc-total-label">ទឹកប្រាក់សរុបត្រូវបង់:</span>
+          <span id="totalCostVal" class="live-calc-total-amount">0 ៛</span>
+        </div>
+      </div>
+
+      <!-- Field 7: Submit Button -->
+      <button type="submit" class="meter-btn-submit" id="btnSubmitReading">
+        <i class="fa-solid fa-floppy-disk"></i> កត់ត្រា & បង្កើតវិក្កយបត្រ
+      </button>
+    </form>
+  </div>
+
+  <!-- Right Column: Readings History Table -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-cyan);"></i> ប្រវត្តិកត់ត្រាកុងទ័រថ្មីៗ
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>កុងទ័រ</th>
+            <th>លេខចាស់</th>
+            <th>លេខថ្មី</th>
+            <th>kWh</th>
+            <th>កាលបរិច្ឆេទ</th>
+            <th>ស្ថានភាព / ព្រមាន</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in readings %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ r.meter_number }}</div>
+              <small style="color: var(--text-muted);">{{ r.customer_name }}</small>
+            </td>
+            <td>{{ "{:,.2f}".format(r.previous_reading) }}</td>
+            <td>{{ "{:,.2f}".format(r.current_reading) }}</td>
+            <td><strong style="color: #60a5fa;">{{ "{:,.2f}".format(r.total_kwh) }}</strong></td>
+            <td>{{ r.reading_date }}</td>
+            <td>
+              {% if r.alert_notes %}
+                <span class="badge badge-overdue" title="{{ r.alert_notes }}"><i class="fa-solid fa-triangle-exclamation"></i> Alert</span>
+              {% else %}
+                <span class="badge badge-paid"><i class="fa-solid fa-check"></i> ធម្មតា</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Real-time calculation and flexible pricing logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const meterSelect = document.getElementById('meterSelect');
+    const prevReadingInput = document.getElementById('prevReadingInput');
+    const currReadingInput = document.getElementById('currReadingInput');
+    
+    const policyAuto = document.getElementById('policyAuto');
+    const policyTiered = document.getElementById('policyTiered');
+    const policyFlat = document.getElementById('policyFlat');
+
+    const tier1RateInput = document.getElementById('tier1RateInput');
+    const tier2RateInput = document.getElementById('tier2RateInput');
+    const flatRateInput = document.getElementById('flatRateInput');
+    const btnAutoPricing = document.getElementById('btnAutoPricing');
+    const autoCustomerTypeBadge = document.getElementById('autoCustomerTypeBadge');
+    const pricingAutoToast = document.getElementById('pricingAutoToast');
+
+    const kwhValDisplay = document.getElementById('kwhValDisplay');
+    const tier1Display = document.getElementById('tier1Display');
+    const tier2Display = document.getElementById('tier2Display');
+    const flatDisplay = document.getElementById('flatDisplay');
+    const autoEdcDisplay = document.getElementById('autoEdcDisplay');
+    const subsidyDisplay = document.getElementById('subsidyDisplay');
+    const subsidyVal = document.getElementById('subsidyVal');
+
+    const t1Kwh = document.getElementById('t1Kwh');
+    const t1RateDisplay = document.getElementById('t1RateDisplay');
+    const t1Cost = document.getElementById('t1Cost');
+    const t2Kwh = document.getElementById('t2Kwh');
+    const t2RateDisplay = document.getElementById('t2RateDisplay');
+    const t2Cost = document.getElementById('t2Cost');
+    const flatKwh = document.getElementById('flatKwh');
+    const flatRateDisplay = document.getElementById('flatRateDisplay');
+    const flatCost = document.getElementById('flatCost');
+    const totalCostVal = document.getElementById('totalCostVal');
+    const alertWarningBox = document.getElementById('alertWarningBox');
+
+    // Standard EDC Tariffs database
+    const EDC_TARIFFS = {
+      'Residential': [
+        { min: 0, max: 10, rate: 380, label: '0 - 10 kWh' },
+        { min: 10, max: 50, rate: 480, label: '10 - 50 kWh' },
+        { min: 50, max: 200, rate: 610, label: '50 - 200 kWh' },
+        { min: 200, max: null, rate: 730, label: '> 200 kWh' }
+      ],
+      'Commercial': [
+        { min: 0, max: 200, rate: 710, label: '0 - 200 kWh' },
+        { min: 200, max: null, rate: 790, label: '> 200 kWh' }
+      ],
+      'Agricultural': [
+        { min: 0, max: 100, rate: 480, label: '0 - 100 kWh' },
+        { min: 100, max: null, rate: 600, label: '> 100 kWh' }
+      ],
+      'Industrial': [
+        { min: 0, max: 500, rate: 650, label: '0 - 500 kWh' },
+        { min: 500, max: null, rate: 710, label: '> 500 kWh' }
+      ]
+    };
+
+    const PRESET_RATES = {
+      'Residential': { tier1: 400, tier2: 600, flat: 800, labelKh: 'លំនៅឋាន (Residential)' },
+      'Commercial': { tier1: 710, tier2: 790, flat: 790, labelKh: 'អាជីវកម្ម (Commercial)' },
+      'Agricultural': { tier1: 480, tier2: 600, flat: 600, labelKh: 'កសិកម្ម (Agricultural)' },
+      'Industrial': { tier1: 650, tier2: 710, flat: 710, labelKh: 'ឧស្សាហកម្ម (Industrial)' }
+    };
+
+    function getSelectedCustomerType() {
+      if (!meterSelect || meterSelect.selectedIndex <= 0) return 'Residential';
+      const opt = meterSelect.options[meterSelect.selectedIndex];
+      return opt.getAttribute('data-customer-type') || 'Residential';
+    }
+
+    function formatNumber(num) {
+      return Number(Math.round(num)).toLocaleString('en-US');
+    }
+
+    function updateTileActiveState() {
+      const tileFlat = document.getElementById('tileFlat');
+      const tileTiered = document.getElementById('tileTiered');
+      const tileAuto = document.getElementById('tileAuto');
+      if (tileFlat) tileFlat.classList.toggle('active', !!(policyFlat && policyFlat.checked));
+      if (tileTiered) tileTiered.classList.toggle('active', !!(policyTiered && policyTiered.checked));
+      if (tileAuto) tileAuto.classList.toggle('active', !!(policyAuto && policyAuto.checked));
+    }
+
+    function calculate() {
+      const prev = parseFloat(prevReadingInput.value) || 0;
+      const currText = currReadingInput.value.trim();
+      const curr = parseFloat(currText);
+
+      updateTileActiveState();
+
+      const isAuto = policyAuto && policyAuto.checked;
+      const isFlat = policyFlat && policyFlat.checked;
+      const isTiered = policyTiered && policyTiered.checked;
+
+      const flatRate = parseFloat(flatRateInput.value) || 800;
+      const tier1Rate = parseFloat(tier1RateInput.value) || 400;
+      const tier2Rate = parseFloat(tier2RateInput.value) || 600;
+
+      // Update rate displays
+      if (flatRateDisplay) flatRateDisplay.textContent = flatRate;
+      if (t1RateDisplay) t1RateDisplay.textContent = tier1Rate;
+      if (t2RateDisplay) t2RateDisplay.textContent = tier2Rate;
+
+      // Handle empty or invalid reading
+      if (currText === '' || isNaN(curr)) {
+        kwhValDisplay.textContent = '0.00';
+        totalCostVal.textContent = '0 ៛';
+        alertWarningBox.style.display = 'none';
+
+        if (isFlat) {
+          tier1Display.style.display = 'none';
+          tier2Display.style.display = 'none';
+          autoEdcDisplay.style.display = 'none';
+          subsidyDisplay.style.display = 'none';
+          flatDisplay.style.display = 'block';
+          flatKwh.textContent = '0';
+          flatCost.textContent = '0';
+        } else if (isAuto) {
+          tier1Display.style.display = 'none';
+          tier2Display.style.display = 'none';
+          flatDisplay.style.display = 'none';
+          subsidyDisplay.style.display = 'none';
+          autoEdcDisplay.style.display = 'block';
+          autoEdcDisplay.innerHTML = '<div>• គណនាតាមស្តង់ដារ EDC ស្វ័យប្រវត្តិ (0 kWh)</div>';
+        } else {
+          flatDisplay.style.display = 'none';
+          autoEdcDisplay.style.display = 'none';
+          subsidyDisplay.style.display = 'none';
+          tier1Display.style.display = 'block';
+          tier2Display.style.display = 'block';
+          t1Kwh.textContent = '0';
+          t1Cost.textContent = '0';
+          t2Kwh.textContent = '0';
+          t2Cost.textContent = '0';
+        }
+        return;
+      }
+
+      const totalKwh = curr - prev;
+
+      // Anomaly Validation
+      if (totalKwh < 0) {
+        alertWarningBox.textContent = `⚠️ ព្រមាន៖ លេខថ្មី (${curr}) តូចជាងលេខចាស់ (${prev})! កុងទ័រមិនអាចថយក្រោយបានទេ។`;
+        alertWarningBox.style.display = 'block';
+      } else if (prev > 0 && totalKwh > (prev * 3)) {
+        alertWarningBox.textContent = `⚠️ ព្រមាន៖ ការប្រើប្រាស់កើនឡើងខ្ពស់ខុសធម្មតា (${totalKwh.toFixed(1)} kWh)! សូមត្រួតពិនិត្យឡើងវិញ។`;
+        alertWarningBox.style.display = 'block';
+      } else {
+        alertWarningBox.style.display = 'none';
+      }
+
+      const safeKwh = Math.max(0, totalKwh);
+      kwhValDisplay.textContent = safeKwh.toFixed(2);
+
+      if (isFlat) {
+        // Flat Rate
+        tier1Display.style.display = 'none';
+        tier2Display.style.display = 'none';
+        autoEdcDisplay.style.display = 'none';
+        subsidyDisplay.style.display = 'none';
+        flatDisplay.style.display = 'block';
+
+        const flatTotal = Math.round(safeKwh * flatRate);
+        flatKwh.textContent = safeKwh.toFixed(2);
+        flatCost.textContent = formatNumber(flatTotal);
+        totalCostVal.textContent = `${formatNumber(flatTotal)} ៛`;
+      } else if (isTiered) {
+        // Custom Tiered (0-50 @ tier1Rate, >50 @ tier2Rate)
+        flatDisplay.style.display = 'none';
+        autoEdcDisplay.style.display = 'none';
+        subsidyDisplay.style.display = 'none';
+        tier1Display.style.display = 'block';
+        tier2Display.style.display = 'block';
+
+        const t1Usage = Math.min(safeKwh, 50.0);
+        const t2Usage = Math.max(0.0, safeKwh - 50.0);
+        const c1 = Math.round(t1Usage * tier1Rate);
+        const c2 = Math.round(t2Usage * tier2Rate);
+        const tieredTotal = c1 + c2;
+
+        t1Kwh.textContent = t1Usage.toFixed(2);
+        t1Cost.textContent = formatNumber(c1);
+        t2Kwh.textContent = t2Usage.toFixed(2);
+        t2Cost.textContent = formatNumber(c2);
+        totalCostVal.textContent = `${formatNumber(tieredTotal)} ៛`;
+      } else if (isAuto) {
+        // Auto EDC Standard Tiers by Customer Type
+        tier1Display.style.display = 'none';
+        tier2Display.style.display = 'none';
+        flatDisplay.style.display = 'none';
+        autoEdcDisplay.style.display = 'block';
+
+        const cType = getSelectedCustomerType();
+        const tiers = EDC_TARIFFS[cType] || EDC_TARIFFS['Residential'];
+
+        let remaining = safeKwh;
+        let autoTotal = 0;
+        let html = '';
+
+        for (const t of tiers) {
+          if (remaining <= 0) break;
+          const cap = (t.max !== null) ? (t.max - t.min) : remaining;
+          const used = Math.min(remaining, cap);
+          if (used > 0) {
+            const cost = Math.round(used * t.rate);
+            autoTotal += cost;
+            html += `<div style="margin-bottom: 2px;">• កាំ (${t.label}): ${used.toFixed(2)} kWh × ${t.rate}៛ = ${formatNumber(cost)} ៛</div>`;
+            remaining -= used;
+          }
+        }
+
+        if (html === '') {
+          html = '<div>• គណនាតាមស្តង់ដារ EDC ស្វ័យប្រវត្តិ (0 kWh)</div>';
+        }
+
+        autoEdcDisplay.innerHTML = html;
+
+        // Subsidy rule: Residential <= 10 kWh grants 1000 KHR
+        let subsidy = 0;
+        if (cType === 'Residential' && safeKwh > 0 && safeKwh <= 10.0) {
+          subsidy = 1000;
+          subsidyDisplay.style.display = 'block';
+          subsidyVal.textContent = '1,000';
+        } else {
+          subsidyDisplay.style.display = 'none';
+        }
+
+        const netTotal = Math.max(0, autoTotal - subsidy);
+        totalCostVal.textContent = `${formatNumber(netTotal)} ៛`;
+      }
+    }
+
+    // Auto-fill button click handler
+    if (btnAutoPricing) {
+      btnAutoPricing.addEventListener('click', () => {
+        const cType = getSelectedCustomerType();
+        const preset = PRESET_RATES[cType] || PRESET_RATES['Residential'];
+
+        tier1RateInput.value = preset.tier1;
+        tier2RateInput.value = preset.tier2;
+        flatRateInput.value = preset.flat;
+
+        if (pricingAutoToast) {
+          pricingAutoToast.style.display = 'block';
+          setTimeout(() => {
+            pricingAutoToast.style.display = 'none';
+          }, 2500);
+        }
+
+        calculate();
+      });
+    }
+
+    // Customer dropdown change
+    if (meterSelect) {
+      meterSelect.addEventListener('change', () => {
+        const opt = meterSelect.options[meterSelect.selectedIndex];
+        const prev = opt.getAttribute('data-latest-reading') || '0';
+        prevReadingInput.value = parseFloat(prev).toFixed(2);
+
+        const cType = opt.getAttribute('data-customer-type') || 'Residential';
+        const preset = PRESET_RATES[cType] || PRESET_RATES['Residential'];
+        if (autoCustomerTypeBadge) {
+          autoCustomerTypeBadge.textContent = preset.labelKh;
+        }
+
+        calculate();
+      });
+    }
+
+    if (currReadingInput) {
+      currReadingInput.addEventListener('input', calculate);
+    }
+
+    if (policyAuto) policyAuto.addEventListener('change', calculate);
+    if (policyTiered) policyTiered.addEventListener('change', calculate);
+    if (policyFlat) policyFlat.addEventListener('change', calculate);
+
+    // Auto switch to flat policy when editing flat rate
+    if (flatRateInput) {
+      flatRateInput.addEventListener('input', () => {
+        policyFlat.checked = true;
+        calculate();
+      });
+      flatRateInput.addEventListener('focus', () => {
+        policyFlat.checked = true;
+        calculate();
+      });
+    }
+
+    // Auto switch to tiered policy when editing tier rates
+    if (tier1RateInput) {
+      tier1RateInput.addEventListener('input', () => {
+        policyTiered.checked = true;
+        calculate();
+      });
+      tier1RateInput.addEventListener('focus', () => {
+        policyTiered.checked = true;
+        calculate();
+      });
+    }
+
+    if (tier2RateInput) {
+      tier2RateInput.addEventListener('input', () => {
+        policyTiered.checked = true;
+        calculate();
+      });
+      tier2RateInput.addEventListener('focus', () => {
+        policyTiered.checked = true;
+        calculate();
+      });
+    }
+
+    // Make whole tile clickable
+    const tileFlat = document.getElementById('tileFlat');
+    const tileTiered = document.getElementById('tileTiered');
+    const tileAuto = document.getElementById('tileAuto');
+
+    if (tileFlat) {
+      tileFlat.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'INPUT') {
+          policyFlat.checked = true;
+          calculate();
+        }
+      });
+    }
+    if (tileTiered) {
+      tileTiered.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'INPUT') {
+          policyTiered.checked = true;
+          calculate();
+        }
+      });
+    }
+    if (tileAuto) {
+      tileAuto.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'INPUT') {
+          policyAuto.checked = true;
+          calculate();
+        }
+      });
+    }
+
+    // Initial run
+    calculate();
+  });
+</script>
+{% endblock %}

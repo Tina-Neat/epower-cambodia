@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}គ្រប់គ្រងអ្នកប្រើប្រាស់ & អនុម័ត - E-Power{% endblock %}
+{% block header_title %}គ្រប់គ្រងអ្នកប្រើប្រាស់ & អនុម័ត (Users & Approval){% endblock %}
+{% block header_subtitle %}ពិនិត្យសំណើចុះឈ្មោះថ្មីៗ និងគ្រប់គ្រងសិទ្ធិបុគ្គលិកក្នុងប្រព័ន្ធ{% endblock %}
+
+{% block top_actions %}
+<a href="/" class="btn btn-secondary btn-sm" style="white-space: nowrap;">
+  <i class="fa-solid fa-arrow-left"></i> ត្រឡប់ទៅ Dashboard
+</a>
+{% endblock %}
+
+{% block content %}
+<style>
+  @media (min-width: 1024px) {
+    /* Desktop: Strictly zero scrollbar, 100% width */
+    .table-responsive {
+      width: 100% !important;
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
+    }
+    .custom-table {
+      width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse;
+    }
+  }
+</style>
+  .custom-table th {
+    padding: 10px 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border-glass);
+    vertical-align: middle;
+  }
+  .custom-table td {
+    padding: 10px 8px !important;
+    font-size: 0.84rem !important;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  /* Phone badge: strictly horizontal on one line, compact & clean */
+  .phone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-family: 'Inter', var(--font-sans);
+    font-size: 0.8rem;
+    white-space: nowrap !important;
+  }
+  .phone-badge i {
+    color: #16a34a;
+    font-size: 0.72rem;
+  }
+
+  /* Permanent admin badge */
+  .admin-perm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+    white-space: nowrap !important;
+  }
+
+  .user-avatar-mini {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+  }
+</style>
+
+<div style="display: flex; flex-direction: column; gap: 24px;">
+
+  <!-- SECTION 1: PENDING APPROVAL REQUESTS -->
+  <div class="panel" style="border: 2px solid {% if pending_users|length > 0 %}#f59e0b{% else %}var(--border-glass){% endif %}; overflow: hidden;">
+    <div class="panel-header" style="flex-wrap: wrap; gap: 12px; background: {% if pending_users|length > 0 %}#fffbeb{% else %}transparent{% endif %}; border-radius: 12px 12px 0 0;">
+      <div class="panel-title" style="color: {% if pending_users|length > 0 %}#b45309{% else %}var(--text-primary){% endif %}; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-user-clock" style="font-size: 1.25rem;"></i>
+        <span>សំណើចុះឈ្មោះរង់ចាំការអនុម័ត (Pending Requests)</span>
+        <span class="badge {% if pending_users|length > 0 %}badge-warning{% else %}badge-info{% endif %}" style="font-size: 0.82rem; padding: 3px 10px;">
+          {{ pending_users|length }} នាក់
+        </span>
+      </div>
+      <div style="font-size: 0.82rem; color: #78350f;">
+        <i class="fa-solid fa-shield-check"></i> មានតែ <strong>Admin អចិន្ត្រៃយ៍</strong> ប៉ុណ្ណោះដែលអាចអនុម័តបាន
+      </div>
+    </div>
+
+    {% if pending_users|length == 0 %}
+    <div style="padding: 32px 20px; text-align: center; color: var(--text-muted);">
+      <i class="fa-solid fa-clipboard-check" style="font-size: 2.2rem; color: #10b981; margin-bottom: 10px;"></i>
+      <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">គ្មានសំណើចុះឈ្មោះថ្មីកំពុងរង់ចាំឡើយ</h3>
+      <p style="font-size: 0.84rem;">រាល់ពេលមានបុគ្គលិកចុះឈ្មោះថ្មី ប្រព័ន្ធនឹងបង្ហាញនៅត្រង់នេះដើម្បីឱ្យ Admin អនុម័ត។</p>
+    </div>
+    {% else %}
+    <div class="table-responsive">
+      <table class="custom-table">
+        <colgroup>
+          <col style="width: 24%;">
+          <col style="width: 14%;">
+          <col style="width: 16%;">
+          <col style="width: 11%;">
+          <col style="width: 13%;">
+          <col style="width: 22%;">
+        </colgroup>
+        <thead>
+          <tr style="background: #fef3c7;">
+            <th>ឈ្មោះពេញ</th>
+            <th>ឈ្មោះគណនី</th>
+            <th>លេខទូរស័ព្ទ</th>
+            <th>តួនាទីស្នើសុំ</th>
+            <th>កាលបរិច្ឆេទ</th>
+            <th style="text-align: right;">សកម្មភាពអនុម័ត</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in pending_users %}
+          <tr>
+            <td data-label="ឈ្មោះពេញ">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="user-avatar-mini" style="background: #fde68a; color: #b45309; font-weight: 700;">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div style="min-width: 0; overflow: hidden;">
+                  <div style="font-weight: 700; color: var(--text-primary); font-size: 0.86rem; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ u.full_name }}</div>
+                  <div style="font-size: 0.72rem; color: #d97706; line-height: 1.2;"><i class="fa-solid fa-clock"></i> រង់ចាំការអនុម័ត</div>
+                </div>
+              </div>
+            </td>
+            <td data-label="ឈ្មោះគណនី"><code style="font-size: 0.8rem; background: #f1f5f9; padding: 2px 5px; border-radius: 4px;">{{ u.username }}</code></td>
+            <td data-label="លេខទូរស័ព្ទ">
+              {% if u.phone %}
+              <div class="phone-badge">
+                <i class="fa-solid fa-phone"></i>
+                <span>{{ u.phone }}</span>
+              </div>
+              {% else %}
+              <span style="color: #94a3b8;">-</span>
+              {% endif %}
+            </td>
+            <td data-label="តួនាទីស្នើសុំ">
+              <span class="badge badge-info" style="font-size: 0.74rem; padding: 2px 6px;">{{ u.role }}</span>
+            </td>
+            <td data-label="កាលបរិច្ឆេទ">
+              <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary); line-height: 1.2;">{{ u.created_at[:10] if u.created_at else '-' }}</div>
+              {% if u.created_at and u.created_at|length > 10 %}
+              <div style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.2;">{{ u.created_at[11:16] }}</div>
+              {% endif %}
+            </td>
+            <td data-label="សកម្មភាពអនុម័ត" style="text-align: right;">
+              <div style="display: inline-flex; align-items: center; gap: 4px;">
+                <!-- Form Approve with Role selection -->
+                <form action="/users/{{ u.user_id }}/approve" method="POST" style="display: inline-flex; align-items: center; gap: 3px;">
+                  <select name="assigned_role" style="font-size: 0.74rem; padding: 3px 5px; border-radius: 5px; border: 1px solid #cbd5e1; background: #fff;">
+                    <option value="Staff" {% if u.role == 'Staff' %}selected{% endif %}>Staff</option>
+                    <option value="Cashier" {% if u.role == 'Cashier' %}selected{% endif %}>Cashier</option>
+                    <option value="Technician" {% if u.role == 'Technician' %}selected{% endif %}>Technician</option>
+                    <option value="Admin" {% if u.role == 'Admin' %}selected{% endif %}>Admin</option>
+                  </select>
+                  <button type="submit" class="btn btn-success btn-sm" style="padding: 3px 8px; font-weight: 700; font-size: 0.74rem;">
+                    <i class="fa-solid fa-check"></i> អនុម័ត
+                  </button>
+                </form>
+
+                <!-- Form Reject -->
+                <form action="/users/{{ u.user_id }}/reject" method="POST" onsubmit="return confirm('តើអ្នកពិតជាចង់បដិសេធគណនី {{ u.username }} មែនទេ?');" style="display: inline;">
+                  <button type="submit" class="btn btn-sm" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 3px 6px; font-size: 0.74rem;">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- SECTION 2: ALL APPROVED USERS -->
+  <div class="panel" style="overflow: hidden;">
+    <div class="panel-header" style="flex-wrap: wrap; gap: 12px;">
+      <div class="panel-title">
+        <i class="fa-solid fa-users" style="color: var(--primary);"></i>
+        <span>បញ្ជីអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ (All System Users)</span>
+        <span class="badge badge-info" style="margin-left: 8px;">{{ all_users|length }} គណនី</span>
+      </div>
+      <div style="font-size: 0.82rem; color: var(--text-muted);">
+        <i class="fa-solid fa-circle-check" style="color: #059669;"></i> គណនីដែលបានអនុម័តរួចទើបអាច Login បាន
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <colgroup>
+          <col style="width: 22%;">
+          <col style="width: 12%;">
+          <col style="width: 15%;">
+          <col style="width: 9%;">
+          <col style="width: 12%;">
+          <col style="width: 13%;">
+          <col style="width: 10%;">
+          <col style="width: 7%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>ឈ្មោះ & ព័ត៌មាន</th>
+            <th>ឈ្មោះគណនី</th>
+            <th>លេខទូរស័ព្ទ</th>
+            <th>តួនាទី</th>
+            <th>ស្ថានភាព</th>
+            <th>ប្រភេទគណនី</th>
+            <th>កាលបរិច្ឆេទ</th>
+            <th style="text-align: right;">សកម្មភាព</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in all_users %}
+          <tr>
+            <td data-label="ឈ្មោះ & ព័ត៌មាន">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="user-avatar-mini" style="background: {% if u.is_permanent == 1 %}#dbeafe; color: #1e40af; border: 1.5px solid #3b82f6;{% elif u.status == 'Approved' %}#ecfdf5; color: #065f46;{% elif u.status == 'Pending' %}#fffbeb; color: #b45309;{% else %}#fef2f2; color: #991b1b;{% endif %}">
+                  {% if u.is_permanent == 1 %}
+                    <i class="fa-solid fa-crown"></i>
+                  {% else %}
+                    <i class="fa-solid fa-user"></i>
+                  {% endif %}
+                </div>
+                <div style="min-width: 0; overflow: hidden;">
+                  <div style="font-weight: 700; color: var(--text-primary); font-size: 0.86rem; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ u.full_name.replace(' (Permanent Admin)', '') }}</div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);">ID: #{{ u.user_id }}</div>
+                </div>
+              </div>
+            </td>
+            <td data-label="ឈ្មោះគណនី"><code style="font-size: 0.8rem; background: #f1f5f9; padding: 2px 5px; border-radius: 4px;">{{ u.username }}</code></td>
+            <td data-label="លេខទូរស័ព្ទ">
+              {% if u.phone %}
+              <div class="phone-badge">
+                <i class="fa-solid fa-phone"></i>
+                <span>{{ u.phone }}</span>
+              </div>
+              {% else %}
+              <span style="color: #94a3b8;">-</span>
+              {% endif %}
+            </td>
+            <td data-label="តួនាទី">
+              <span class="badge {% if u.role == 'Admin' %}badge-primary{% elif u.role == 'Cashier' %}badge-success{% else %}badge-info{% endif %}" style="font-size: 0.74rem; padding: 2px 6px;">
+                {{ u.role }}
+              </span>
+            </td>
+            <td data-label="ស្ថានភាព">
+              {% if u.status == 'Approved' %}
+                <span class="badge badge-success" style="font-size: 0.74rem; padding: 2px 6px; white-space: nowrap;"><i class="fa-solid fa-circle-check"></i> បានអនុម័ត</span>
+              {% elif u.status == 'Pending' %}
+                <span class="badge badge-warning" style="font-size: 0.74rem; padding: 2px 6px; white-space: nowrap;"><i class="fa-solid fa-clock"></i> រង់ចាំ</span>
+              {% else %}
+                <span class="badge badge-danger" style="font-size: 0.74rem; padding: 2px 6px; white-space: nowrap;"><i class="fa-solid fa-circle-xmark"></i> បដិសេធ</span>
+              {% endif %}
+            </td>
+            <td data-label="ប្រភេទគណនី">
+              {% if u.is_permanent == 1 %}
+                <span class="admin-perm-badge">
+                  <i class="fa-solid fa-shield-halved"></i> Admin អចិន្ត្រៃយ៍
+                </span>
+              {% else %}
+                <span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">អ្នកប្រើទូទៅ</span>
+              {% endif %}
+            </td>
+            <td data-label="កាលបរិច្ឆេទ">
+              {% if u.approved_at %}
+                <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-primary); line-height: 1.2;">{{ u.approved_at[:10] }}</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.2;">{{ u.approved_at[11:16] }}</div>
+              {% else %}
+                <span style="color: #94a3b8;">-</span>
+              {% endif %}
+            </td>
+            <td data-label="សកម្មភាព" style="text-align: right;">
+              {% if u.is_permanent == 1 %}
+                <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px;" title="ការពារអចិន្ត្រៃយ៍">
+                  <i class="fa-solid fa-lock"></i> ការពារ
+                </span>
+              {% else %}
+                <div style="display: inline-flex; align-items: center; gap: 4px;">
+                  {% if u.status == 'Rejected' %}
+                  <form action="/users/{{ u.user_id }}/approve" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-secondary" style="font-size: 0.72rem; padding: 3px 6px;" title="អនុញ្ញាតឡើងវិញ">
+                      <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+
+                  <form action="/users/{{ u.user_id }}/delete" method="POST" onsubmit="return confirm('តើអ្នកពិតជាចង់លុបគណនី {{ u.username }} ចេញពីប្រព័ន្ធមែនទេ?');" style="display: inline;">
+                    <button type="submit" class="btn btn-sm" style="background: #f8fafc; color: #dc2626; border: 1px solid #cbd5e1; font-size: 0.72rem; padding: 3px 6px;" title="លុបគណនី">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

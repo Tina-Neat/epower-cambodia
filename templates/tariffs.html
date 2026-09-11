@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}តារាងតម្លៃពន្ធុភាព - E-Power{% endblock %}
+{% block header_title %}តារាងតម្លៃពន្ធុភាពអគ្គិសនី (Tiered Tariffs){% endblock %}
+{% block header_subtitle %}កាំតម្លៃអគ្គិសនីគិតតាមបរិមាណប្រើប្រាស់ និងប្រភេទអតិថិជន (EDC Structure){% endblock %}
+
+{% block content %}
+<style>
+  .tariff-calc-panel {
+    position: sticky;
+    top: 92px;
+  }
+  @media (max-width: 1023px) {
+    .tariff-calc-panel {
+      position: static !important;
+    }
+  }
+</style>
+<div class="tariffs-main-grid">
+  <!-- Tariffs Table Grid -->
+  <div>
+    {% for c_type, tiers in tariffs_by_type.items() %}
+    <div class="panel" style="margin-bottom: 22px;">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="badge badge-{{ c_type|lower }}">{{ c_type }}</span> 
+          <span>កម្រិតពន្ធុភាពសម្រាប់ {{ c_type }}</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="custom-table">
+          <colgroup>
+            <col style="width: 60%;">
+            <col style="width: 40%;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>កម្រិតប្រើប្រាស់ (kWh)</th>
+              <th style="text-align: right;">តម្លៃក្នុង ១ kWh (KHR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tiers %}
+            <tr>
+              <td data-label="កម្រិតប្រើប្រាស់">
+                {% if t.max_kwh %}
+                  <strong>{{ "%g" % t.min_kwh }} - {{ "%g" % t.max_kwh }} kWh</strong>
+                {% else %}
+                  <strong>> {{ "%g" % t.min_kwh }} kWh</strong>
+                {% endif %}
+              </td>
+              <td data-label="តម្លៃក្នុង ១ kWh" style="text-align: right;">
+                <strong style="color: #2563eb;">{{ "{:,.0f}".format(t.price_per_kwh) }} ៛</strong>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Interactive Tariff Simulator / Calculator -->
+  <div class="panel tariff-calc-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fa-solid fa-calculator" style="color: var(--accent-cyan);"></i> ម៉ាស៊ីនគណនាថ្លៃភ្លើងសាកល្បង
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="simType">ប្រភេទអតិថិជន:</label>
+      <select id="simType" class="form-control">
+        <option value="Residential">Residential (លំនៅឋាន)</option>
+        <option value="Commercial">Commercial (អាជីវកម្ម)</option>
+        <option value="Agricultural">Agricultural (កសិកម្ម)</option>
+        <option value="Industrial">Industrial (ឧស្សាហកម្ម)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="simKwh">ចំនួនគីឡូវ៉ាត់ម៉ោង (kWh):</label>
+      <input type="number" step="1" id="simKwh" class="form-control" value="85" placeholder="ឧ. 85">
+    </div>
+
+    <button type="button" class="btn btn-primary" id="btnSimulate" style="width: 100%; margin-bottom: 20px;">
+      <i class="fa-solid fa-bolt"></i> គណនាឥឡូវនេះ
+    </button>
+
+    <div id="simResultBox" style="background: #f8fafc; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 18px;">
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">ទឹកប្រាក់ថាមពលប៉ាន់ស្មាន:</div>
+      <div id="simTotalAmount" style="font-size: 1.8rem; font-weight: 800; color: #059669;">0 ៛</div>
+      <div id="simBreakdownList" style="margin-top: 14px; font-size: 0.82rem; border-top: 1px dashed var(--border-glass); padding-top: 10px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function runSimulation() {
+    const type = document.getElementById('simType').value;
+    const kwh = parseFloat(document.getElementById('simKwh').value) || 0;
+
+    const res = await fetch(`/api/calculate?customer_type=${encodeURIComponent(type)}&kwh=${kwh}`);
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('simTotalAmount').textContent = `${data.total_cost.toLocaleString()} ៛`;
+      
+      let html = '<div style="font-weight:700; margin-bottom:6px; color:#334155;">បំបែកតាមកាំ:</div>';
+      data.breakdown.forEach(b => {
+        html += `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:#475569;">
+          <span>${b.tier_range} (${b.kwh_used} kWh):</span>
+          <span style="font-weight:600; color:#0f172a;">${b.subtotal.toLocaleString()} ៛</span>
+        </div>`;
+      });
+      document.getElementById('simBreakdownList').innerHTML = html;
+    }
+  }
+
+  document.getElementById('btnSimulate').addEventListener('click', runSimulation);
+  document.getElementById('simKwh').addEventListener('input', runSimulation);
+  document.getElementById('simType').addEventListener('change', runSimulation);
+  runSimulation();
+</script>
+{% endblock %}
