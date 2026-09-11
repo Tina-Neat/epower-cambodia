@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: epower-cambodia
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn web_app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_PATH
+        value: /var/data/electricity_system.db
+      - key: PYTHON_VERSION
+        value: 3.11.9
+    disk:
+      name: epower-data
+      mountPath: /var/data
+      sizeGB: 1

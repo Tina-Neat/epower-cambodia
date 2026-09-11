@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.git
+.gitignore
+*.log
+server.pid
+server_info.txt
+*.bat
+scratch_*.*

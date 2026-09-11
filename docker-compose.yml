@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  epower-web:
+    build: .
+    container_name: epower_cambodia
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - DATABASE_PATH=/app/data/electricity_system.db
+    volumes:
+      - epower_data:/app/data
+
+volumes:
+  epower_data:
+    driver: local

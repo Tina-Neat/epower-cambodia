@@ -1,0 +1,63 @@
+
+======================================================
+  E-POWER CAMBODIA SERVER STARTED: 2026-09-11 22:09:56
+  Offline URL: http://localhost:8000
+  Online URL : http://192.168.1.23:8000
+======================================================
+INFO:     Started server process [968]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+======================================================
+  E-POWER CAMBODIA SERVER STARTED: 2026-09-11 22:12:15
+  - Offline URL : http://localhost:8000
+  - Online URL  : http://192.168.1.23:8000
+======================================================
+INFO:     Started server process [12448]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+======================================================
+  E-POWER CAMBODIA SERVER STARTED: 2026-09-11 22:12:31
+  - Offline URL : http://localhost:8000
+  - Online URL  : http://192.168.1.23:8000
+======================================================
+INFO:     Started server process [22392]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+======================================================
+  E-POWER CAMBODIA SERVER STARTED: 2026-09-11 22:12:38
+  - Offline URL : http://localhost:8000
+  - Online URL  : http://192.168.1.23:8000
+======================================================
+INFO:     Started server process [10756]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49676 - "GET /login HTTP/1.1" 200 OK
+
+======================================================
+  E-POWER CAMBODIA SERVER STARTED: 2026-09-11 22:12:52
+  - Offline URL : http://localhost:8000
+  - Online URL  : http://192.168.1.23:8000
+======================================================
+INFO:     Started server process [18844]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52815 - "GET /login HTTP/1.1" 200 OK
+
+======================================================
+  E-POWER CAMBODIA SERVER STARTED: 2026-09-11 22:17:49
+  - Offline URL : http://localhost:8000
+  - Online URL  : http://192.168.1.23:8000
+======================================================
+INFO:     Started server process [9776]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49883 - "GET /login HTTP/1.1" 200 OK
