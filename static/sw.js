@@ -3,7 +3,7 @@
  * Caches essential static assets and provides offline fallbacks.
  */
 
-const CACHE_NAME = 'epower-cache-v7';
+const CACHE_NAME = 'epower-cache-v8';
 const ASSETS_TO_CACHE = [
   '/',
   '/login',

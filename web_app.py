@@ -41,12 +41,30 @@ def get_local_ip() -> str:
 # Mount Static Files, Image Directory and Templates
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+STATIC_IMG_DIR = os.path.join(STATIC_DIR, "img")
 IMG_DIR = os.path.join(BASE_DIR, "img")
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
+os.makedirs(STATIC_DIR, exist_ok=True)
+os.makedirs(STATIC_IMG_DIR, exist_ok=True)
+os.makedirs(IMG_DIR, exist_ok=True)
+os.makedirs(TEMPLATES_DIR, exist_ok=True)
+
+# Synchronize logos between img and static/img
+import shutil
+for _d1, _d2 in [(STATIC_IMG_DIR, IMG_DIR), (IMG_DIR, STATIC_IMG_DIR)]:
+    if os.path.exists(_d1):
+        for _f in os.listdir(_d1):
+            _s = os.path.join(_d1, _f)
+            _t = os.path.join(_d2, _f)
+            if os.path.isfile(_s) and not os.path.exists(_t):
+                try:
+                    shutil.copy2(_s, _t)
+                except Exception:
+                    pass
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-if os.path.exists(IMG_DIR):
-    app.mount("/img", StaticFiles(directory=IMG_DIR), name="img")
+app.mount("/img", StaticFiles(directory=IMG_DIR), name="img")
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
@@ -103,6 +121,39 @@ async def get_favicon():
     if os.path.exists(fav_path):
         return FileResponse(fav_path, media_type="image/png")
     return FileResponse(os.path.join(IMG_DIR, "E-power-logo.png"), media_type="image/png")
+
+
+@app.get("/img/E-power-logo.png", include_in_schema=False)
+@app.get("/static/img/E-power-logo.png", include_in_schema=False)
+async def get_epower_logo():
+    """Guarantees official E-Power logo is returned regardless of route or mount."""
+    candidates = [
+        os.path.join(STATIC_IMG_DIR, "E-power-logo.png"),
+        os.path.join(IMG_DIR, "E-power-logo.png"),
+        os.path.join(STATIC_DIR, "E-power-logo.png"),
+        os.path.join(STATIC_IMG_DIR, "E-power-logo-clean.png"),
+        os.path.join(IMG_DIR, "E-power-logo-clean.png"),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return FileResponse(c, media_type="image/png")
+    return HTMLResponse("Logo not found", status_code=404)
+
+
+@app.get("/img/{filename:path}", include_in_schema=False)
+async def get_img_file(filename: str):
+    """Fallback handler for any file requested under /img/."""
+    candidates = [
+        os.path.join(IMG_DIR, filename),
+        os.path.join(STATIC_IMG_DIR, filename),
+        os.path.join(STATIC_DIR, filename),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            media_type = "image/png" if c.endswith(".png") else None
+            return FileResponse(c, media_type=media_type)
+    return HTMLResponse("Image not found", status_code=404)
+
 
 
 def generate_qr_base64(data: str) -> str:
