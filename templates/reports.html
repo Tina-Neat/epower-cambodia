@@ -15,7 +15,7 @@
   @media (min-width: 1024px) {
     .table-responsive {
       width: 100% !important;
-      overflow-x: hidden !important;
+      overflow-x: auto !important;
       overflow-y: visible !important;
     }
     .reports-table-1 {
@@ -25,8 +25,56 @@
     }
     .reports-table-2 {
       width: 100% !important;
+      min-width: 880px;
       table-layout: fixed !important;
       border-collapse: collapse;
+    }
+    .reports-table-2 th,
+    .reports-table-2 td {
+      padding: 12px 10px !important;
+      font-size: 0.86rem !important;
+      vertical-align: middle !important;
+    }
+    .reports-table-2 th:nth-child(1),
+    .reports-table-2 td:nth-child(1),
+    .reports-table-2 th:nth-child(3),
+    .reports-table-2 td:nth-child(3),
+    .reports-table-2 th:nth-child(5),
+    .reports-table-2 td:nth-child(5),
+    .reports-table-2 th:nth-child(6),
+    .reports-table-2 td:nth-child(6) {
+      white-space: nowrap !important;
+    }
+    .reports-table-2 th:nth-child(7),
+    .reports-table-2 td:nth-child(7) {
+      text-align: center !important;
+      white-space: nowrap !important;
+    }
+    .reports-table-2 th:nth-child(8),
+    .reports-table-2 td:nth-child(8) {
+      text-align: center !important;
+      white-space: nowrap !important;
+    }
+    .reports-table-2 td .badge {
+      white-space: nowrap !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 5px 12px !important;
+      font-size: 0.8rem !important;
+      letter-spacing: normal !important;
+    }
+    .reports-table-2 td a.btn {
+      white-space: nowrap !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      padding: 6px 14px !important;
+      font-size: 0.82rem !important;
+      box-sizing: border-box !important;
+      border-radius: var(--radius-sm) !important;
+      box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2) !important;
     }
   }
   @media (max-width: 1023px) {
@@ -114,14 +162,14 @@
   <div class="table-responsive">
     <table class="custom-table reports-table-2">
       <colgroup>
+        <col style="width: 10%;">
+        <col style="width: 15%;">
+        <col style="width: 11%;">
+        <col style="width: 16%;">
+        <col style="width: 11%;">
+        <col style="width: 11%;">
         <col style="width: 12%;">
-        <col style="width: 17%;">
         <col style="width: 14%;">
-        <col style="width: 18%;">
-        <col style="width: 12%;">
-        <col style="width: 12%;">
-        <col style="width: 8%;">
-        <col style="width: 7%;">
       </colgroup>
       <thead>
         <tr>
@@ -129,10 +177,10 @@
           <th>អតិថិជន</th>
           <th>លេខទូរស័ព្ទ</th>
           <th>ទីតាំង / អាសយដ្ឋាន</th>
-          <th>កាលបរិច្ឆេទផុតកំណត់</th>
+          <th>ថ្ងៃផុតកំណត់</th>
           <th>បំណុលនៅខ្វះ</th>
-          <th>ស្ថានភាព</th>
-          <th>សកម្មភាព</th>
+          <th style="text-align: center;">ស្ថានភាព</th>
+          <th style="text-align: center;">សកម្មភាព</th>
         </tr>
       </thead>
       <tbody>
@@ -142,16 +190,16 @@
           <td data-label="អតិថិជន">{{ d.customer_name }}</td>
           <td data-label="លេខទូរស័ព្ទ">{{ d.customer_phone }}</td>
           <td data-label="ទីតាំង / អាសយដ្ឋាន">{{ d.address }}</td>
-          <td data-label="កាលបរិច្ឆេទផុតកំណត់"><span style="color: #dc2626; font-weight: 600;">{{ d.due_date }}</span></td>
+          <td data-label="ថ្ងៃផុតកំណត់"><span style="color: #dc2626; font-weight: 600;">{{ d.due_date }}</span></td>
           <td data-label="បំណុលនៅខ្វះ"><strong style="color: #dc2626;">{{ "{:,.0f}".format(d.outstanding_balance) }} ៛</strong></td>
-          <td data-label="ស្ថានភាព">
+          <td data-label="ស្ថានភាព" style="text-align: center;">
             {% if d.status == 'Overdue' %}
               <span class="badge badge-overdue">ហួសកាលកំណត់</span>
             {% else %}
               <span class="badge badge-unpaid">មិនទាន់បង់</span>
             {% endif %}
           </td>
-          <td data-label="សកម្មភាព">
+          <td data-label="សកម្មភាព" style="text-align: center;">
             <a href="/payments?invoice_id={{ d.invoice_id }}" class="btn btn-success btn-sm">
               <i class="fa-solid fa-credit-card"></i> បង់ប្រាក់
             </a>
