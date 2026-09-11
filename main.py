@@ -45,13 +45,13 @@ def seed_demo_data():
 
     cust_ids = []
     for name, phone, addr, c_type in sample_customers:
-        cid = meter_service.add_customer(name, phone, addr, c_type, conn)
+        cid = meter_service.add_customer(name, phone, addr, c_type, conn=conn)
         cust_ids.append(cid)
 
     # 2. Add Meters
     meter_ids = []
     for i, cid in enumerate(cust_ids, start=1):
-        mid = meter_service.add_meter(f"EDC-2026-M{i:04d}", cid, "Active", "2026-01-01", conn)
+        mid = meter_service.add_meter(f"EDC-2026-M{i:04d}", cid, "Active", "2026-01-01", conn=conn)
         meter_ids.append(mid)
 
     # 3. Add Readings (Month 1 - January 2026)

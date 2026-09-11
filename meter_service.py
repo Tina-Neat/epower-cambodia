@@ -59,12 +59,16 @@ def add_customer(
         # Fallback to Residential if non-standard string given
         customer_type = 'Residential'
 
+    if isinstance(customer_code, sqlite3.Connection):
+        conn = customer_code
+        customer_code = None
+
     should_close = False
     if conn is None:
         conn = get_connection()
         should_close = True
 
-    if not customer_code or not customer_code.strip():
+    if not customer_code or not str(customer_code).strip():
         customer_code = get_next_customer_code(conn)
 
     # Automatically derive full name if last_name or first_name provided
@@ -153,7 +157,11 @@ def add_meter(
 
     valid_statuses = ('Active', 'Suspended', 'Disconnected', 'Maintenance')
     if status not in valid_statuses:
-        raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
+        status = 'Active'
+
+    if isinstance(location_code, sqlite3.Connection):
+        conn = location_code
+        location_code = None
 
     should_close = False
     if conn is None:
